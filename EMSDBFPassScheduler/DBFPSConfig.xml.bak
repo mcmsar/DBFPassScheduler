@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DBFPassSchedulerConfig>
+
+  <!-- Input file locations -->
+  <Input>
+    <PassScheduleFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\DBFPSConfig\DBFPassSchedule.xml</PassScheduleFile>
+    <OrbitDataFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\datFiles\sarsat.txt</OrbitDataFile>
+    <SatNoradFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\datFiles\SatNorad.txt</SatNoradFile>
+    <!-- SatTLEDir must end with a backslash -->
+    <SatTLEDir>C:\Users\joshua.rehm\TSiDBFPassScheduler\datFiles\</SatTLEDir>
+    <ReferenceBeaconFile>C:\HGT\Config\DBF_ReferenceBeacons.csv</ReferenceBeaconFile>
+  </Input>
+
+  <!-- Output file locations -->
+  <Output>
+    <TraceLogFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\Output\PassScheduleTrace.csv</TraceLogFile>
+    <SunAzElFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\Output\SunAzEl.csv</SunAzElFile>
+    <!-- PhaseOutputDir must end with a backslash -->
+    <PhaseOutputDir>C:\Users\joshua.rehm\TSiDBFPassScheduler\Output\DBFBufferPhase\</PhaseOutputDir>
+    <NullPointingFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\Output\NullFile_1.csv</NullPointingFile>
+  </Output>
+
+</DBFPassSchedulerConfig>

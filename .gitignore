@@ -1,0 +1,21 @@
+# Visual Studio cache/options
+.vs/
+*.suo
+*.user
+*.sdf
+*.opensdf
+
+# Build output
+x64/
+Build/
+[Dd]ebug/
+[Rr]elease/
+*.obj
+*.pch
+*.pdb
+*.ipch
+*.tlog
+*.log
+*.lastbuildstate
+*.write.1.tlog
+ipch/

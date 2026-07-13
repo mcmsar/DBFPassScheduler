@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:dbfconfig="urn:dbfconfig" targetNamespace="urn:dbfconfig" elementFormDefault="unqualified" >
+
+ <!-- DBF pass schedule configuration -->
+
+  <xs:element name="config" >
+    <xs:complexType>
+              <xs:sequence>
+                <xs:element name="dbfpassschedule" type="dbfconfig:dbfpassschedule"  minOccurs="1" maxOccurs="1"/>
+             </xs:sequence>
+            <xs:attribute name="version" type="xs:string" use="required"/>
+      </xs:complexType>
+    </xs:element>
+
+  <xs:complexType name="dbfpassschedule">
+    <xs:all minOccurs="1">
+      <xs:element name="dbfpassschedulecfg" type="dbfconfig:dbfpassschedulecfg"/>
+      <xs:element name="dbfplates" type="dbfconfig:dbfplates"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType  name="dbfpassschedulecfg">
+        <xs:all minOccurs="1">
+            <xs:element name="meolutid" type="xs:integer"/>
+            <xs:element type="dbfconfig:satellites" name="satellites"/>
+        </xs:all>
+  </xs:complexType>
+  
+  <xs:complexType name="satellites">
+        <xs:sequence>
+            <xs:element maxOccurs="unbounded" type="dbfconfig:constellation" name="constellation"/>
+        </xs:sequence>
+  </xs:complexType>   
+	
+  <xs:complexType name="constellation">
+        <xs:sequence>
+            <xs:element maxOccurs="unbounded" type="dbfconfig:satellite" name="satellite"/>
+        </xs:sequence>
+		<xs:attribute name="type" use="required" type="xs:string"/>
+		<xs:attribute name="frequency" use="required" type="xs:decimal"/>
+		<xs:attribute name="polarisation" use="required" type="xs:string"/>
+  </xs:complexType> 	
+
+   <xs:complexType name="satellite">
+        <xs:attribute name="id" use="required" type="xs:string"/>
+		<xs:attribute name="priority" use="required" type="xs:integer"/>
+    </xs:complexType>
+
+  <xs:complexType name="dbfplates">
+        <xs:sequence>
+            <xs:element maxOccurs="unbounded" type="dbfconfig:dbfplate" name="dbfplate"/>
+        </xs:sequence>
+  </xs:complexType> 
+ 
+  <xs:complexType name="dbfplate">
+	<xs:all minOccurs="1">
+		<xs:element name="plateconfigfile" type="xs:string"/>
+		<xs:element name="plateminelevation" type="xs:decimal"/>
+		<xs:element name="plateminseparationangle" type="xs:decimal"/>
+		<xs:element  name="location" type="dbfconfig:location"/>
+		<xs:element  name="combiners" type="dbfconfig:combiners"/>
+	</xs:all>
+	<xs:attribute name="id" use="required" type="xs:string"/>
+  </xs:complexType> 
+
+    <xs:complexType name="location">
+        <xs:all minOccurs="1">
+            <xs:element name="latitude" type="xs:decimal"/>
+            <xs:element name="longitude" type="xs:decimal"/>
+            <xs:element name="altitude" type="xs:decimal"/>
+        </xs:all>
+    </xs:complexType>
+
+  <xs:complexType name="combiners">
+        <xs:sequence>
+            <xs:element maxOccurs="unbounded" type="dbfconfig:combiner" name="combiner"/>
+        </xs:sequence>
+  </xs:complexType> 
+ 
+  <xs:complexType name="combiner">
+	<xs:all minOccurs="1">
+		<xs:element name="constellation" type="xs:string"/>
+		<xs:element name="ipaddress" type="xs:string"/>
+	</xs:all>
+	<xs:attribute name="id" use="required" type="xs:string"/>
+  </xs:complexType> 
+  
+</xs:schema>

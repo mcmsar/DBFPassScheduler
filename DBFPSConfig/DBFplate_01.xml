@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns2:plateconfig xmlns:ns2="urn:dbfplateconfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dbfplateconfig file:///D://TSi_DBF//trunk//EMSDBFPassScheduler_06_17_26//DBFPSConfig//dbfPlateConfig.xsd" version="v1">
+	<dbfplates>
+		<dbfplate id = "1">
+			<platefaceazimuth> 199.0 </platefaceazimuth>
+			<platefaceelevation> 45.0 </platefaceelevation>
+			<platefacerotation> 0.0 </platefacerotation>
+			<platepolarization> LHCP </platepolarization>
+			<fixedpointnumber> 0 </fixedpointnumber>
+			<fixedpoints>
+				<fixedpoint id = "0">
+					<fixedpointaz> 110.0 </fixedpointaz>
+					<fixedpointel> 45.0 </fixedpointel>
+					<fixedpointpol>RHCP</fixedpointpol>
+					<fixedpointdistance>500.00</fixedpointdistance>
+					<fixedpointenabled>false</fixedpointenabled>
+				</fixedpoint>
+			</fixedpoints>
+
+			<cellnumber> 31 </cellnumber>
+			<cells>
+				<cell id = "1">
+						<channelid> 7 </channelid>
+						<xcoord> -18.750 </xcoord>
+						<ycoord> -32.475 </ycoord>
+						<rhcpbias>  253.80 </rhcpbias>
+						<lhcpbias>    72.00 </lhcpbias>
+				</cell>
+				<cell id = "2">
+						<channelid> 6 </channelid>
+						<xcoord>  -6.250 </xcoord>
+						<ycoord> -32.475 </ycoord>
+						<rhcpbias>  198.41 </rhcpbias>
+						<lhcpbias>   126.83 </lhcpbias>
+				</cell>
+				<cell id = "3">
+						<channelid> 5 </channelid>
+						<xcoord>  18.750 </xcoord>
+						<ycoord> -32.475 </ycoord>
+						<rhcpbias>  125.76 </rhcpbias>
+						<lhcpbias>   207.52 </lhcpbias>
+				</cell>
+				<cell id = "4">
+						<channelid> 4 </channelid>
+						<xcoord> -12.500 </xcoord>
+						<ycoord> -21.650 </ycoord>
+						<rhcpbias>  297.67 </rhcpbias>
+						<lhcpbias>    62.66 </lhcpbias>
+				</cell>
+				<cell id = "5">
+						<channelid> 3 </channelid>
+						<xcoord>   0.000 </xcoord>
+						<ycoord> -21.650 </ycoord>
+						<rhcpbias>  291.83 </rhcpbias>
+						<lhcpbias>    57.53 </lhcpbias>
+				</cell>
+				<cell id = "6">
+						<channelid> 2 </channelid>
+						<xcoord>  12.500 </xcoord>
+						<ycoord> -21.650 </ycoord>
+						<rhcpbias>  229.90 </rhcpbias>
+						<lhcpbias>   119.08 </lhcpbias>
+				</cell>
+				<cell id = "7">
+						<channelid> 1 </channelid>
+						<xcoord>  25.000 </xcoord>
+						<ycoord> -21.650 </ycoord>
+						<rhcpbias>  333.43 </rhcpbias>
+						<lhcpbias>  352.97</lhcpbias>
+				</cell>
+				<cell id = "8">
+						<channelid> 15 </channelid>
+						<xcoord> -31.250 </xcoord>
+						<ycoord> -10.825 </ycoord>
+						<rhcpbias>  157.40 </rhcpbias>
+						<lhcpbias>   161.94 </lhcpbias>
+				</cell>
+				<cell id = "9">
+						<channelid> 14 </channelid>
+						<xcoord> -18.750 </xcoord>
+						<ycoord> -10.825 </ycoord>
+						<rhcpbias>  238.37 </rhcpbias>
+						<lhcpbias>   166.24 </lhcpbias>
+				</cell>
+				<cell id = "10">
+						<channelid> 13 </channelid>
+						<xcoord>  -6.250 </xcoord>
+						<ycoord> -10.825 </ycoord>
+						<rhcpbias>  274.80 </rhcpbias>
+						<lhcpbias>   82.06 </lhcpbias>
+				</cell>
+				<cell id = "11">
+						<channelid> 12 </channelid>
+						<xcoord>   6.250 </xcoord>
+						<ycoord> -10.825 </ycoord>
+						<rhcpbias>  316.58 </rhcpbias>
+						<lhcpbias>    75.62 </lhcpbias>
+				</cell>
+				<cell id = "12">
+						<channelid> 11 </channelid>
+						<xcoord>  18.750 </xcoord>
+						<ycoord> -10.825 </ycoord>
+						<rhcpbias>  160.54 </rhcpbias>
+						<lhcpbias>   217.08 </lhcpbias>
+				</cell>
+				<cell id = "13">
+						<channelid> 10 </channelid>
+						<xcoord> -37.500 </xcoord>
+						<ycoord>   0.000 </ycoord>
+						<rhcpbias>  227.97 </rhcpbias>
+						<lhcpbias>   123.62 </lhcpbias>
+				</cell>
+				<cell id = "14">
+						<channelid> 9 </channelid>
+						<xcoord> -25.000 </xcoord>
+						<ycoord>   0.000 </ycoord>
+						<rhcpbias>  267.66 </rhcpbias>
+						<lhcpbias>    102.47</lhcpbias>
+				</cell>
+				<cell id = "15">
+						<channelid> 8 </channelid>
+						<xcoord> -12.500 </xcoord>
+						<ycoord>   0.000 </ycoord>
+						<rhcpbias>  266.93 </rhcpbias>
+						<lhcpbias>   119.53 </lhcpbias>
+				</cell>
+				<cell id = "16">
+						<channelid> 23 </channelid>
+						<xcoord>   0.000 </xcoord>
+						<ycoord>   0.000 </ycoord>
+						<rhcpbias>    0.00 </rhcpbias>
+						<lhcpbias>     0.00</lhcpbias>
+				</cell>
+				<cell id = "17">
+						<channelid> 22 </channelid>
+						<xcoord>  12.500 </xcoord>
+						<ycoord>   0.000 </ycoord>
+						<rhcpbias>  275.79 </rhcpbias>
+						<lhcpbias>   108.26 </lhcpbias>
+				</cell>
+				<cell id = "18">
+						<channelid> 21 </channelid>
+						<xcoord>  25.000 </xcoord>
+						<ycoord>   0.000 </ycoord>
+						<rhcpbias>  170.22 </rhcpbias>
+						<lhcpbias>   182.19 </lhcpbias>
+				</cell>
+				<cell id = "19">
+						<channelid> 20 </channelid>
+						<xcoord>  37.500 </xcoord>
+						<ycoord>   0.000 </ycoord>
+						<rhcpbias>  216.94 </rhcpbias>
+						<lhcpbias>   117.76</lhcpbias>
+				</cell>
+				<cell id = "20">
+						<channelid> 19 </channelid>
+						<xcoord> -18.750 </xcoord>
+						<ycoord>  10.825 </ycoord>
+						<rhcpbias>  263.88 </rhcpbias>
+						<lhcpbias>   118.79</lhcpbias>
+				</cell>
+				<cell id = "21">
+						<channelid> 18 </channelid>
+						<xcoord>  -6.250 </xcoord>
+						<ycoord>  10.825 </ycoord>
+						<rhcpbias>  257.85 </rhcpbias>
+						<lhcpbias>   135.01</lhcpbias>
+				</cell>
+				<cell id = "22">
+						<channelid> 17 </channelid>
+						<xcoord>   6.250 </xcoord>
+						<ycoord>  10.825 </ycoord>
+						<rhcpbias>  225.53 </rhcpbias>
+						<lhcpbias>   120.90</lhcpbias>
+				</cell>
+				<cell id = "23">
+						<channelid> 16 </channelid>
+						<xcoord>  18.750 </xcoord>
+						<ycoord>  10.825 </ycoord>
+						<rhcpbias>  335.89 </rhcpbias>
+						<lhcpbias>    20.80 </lhcpbias>
+				</cell>
+				<cell id = "24">
+						<channelid> 31 </channelid>
+						<xcoord>  31.250 </xcoord>
+						<ycoord>  10.825 </ycoord>
+						<rhcpbias>  217.32 </rhcpbias>
+						<lhcpbias>   118.66 </lhcpbias>
+				</cell>
+				<cell id = "25">
+						<channelid> 30 </channelid>
+						<xcoord> -25.000 </xcoord>
+						<ycoord>  21.650 </ycoord>
+						<rhcpbias>  301.04 </rhcpbias>
+						<lhcpbias>    24.12 </lhcpbias>
+				</cell>
+				<cell id = "26">
+						<channelid> 29 </channelid>
+						<xcoord> -12.500 </xcoord>
+						<ycoord>  21.650 </ycoord>
+						<rhcpbias>   44.10 </rhcpbias>
+						<lhcpbias>   291.89 </lhcpbias>
+				</cell>
+				<cell id = "27">
+						<channelid> 28 </channelid>
+						<xcoord>   0.000 </xcoord>
+						<ycoord>  21.650 </ycoord>
+						<rhcpbias>   10.08 </rhcpbias>
+						<lhcpbias>     6.88 </lhcpbias>
+				</cell>
+				<cell id = "28">
+						<channelid> 27 </channelid>
+						<xcoord>  12.500 </xcoord>
+						<ycoord>  21.650 </ycoord>
+						<rhcpbias>  317.27 </rhcpbias>
+						<lhcpbias>   9.36</lhcpbias>
+				</cell>
+				<cell id = "29">
+						<channelid> 26 </channelid>
+						<xcoord> -18.750 </xcoord>
+						<ycoord>  32.475 </ycoord>
+						<rhcpbias>  220.53 </rhcpbias>
+						<lhcpbias>    99.69 </lhcpbias>
+				</cell>
+				<cell id = "30">
+						<channelid> 25 </channelid>
+						<xcoord>   6.250 </xcoord>
+						<ycoord>  32.475 </ycoord>
+						<rhcpbias>  142.09 </rhcpbias>
+						<lhcpbias>   161.11 </lhcpbias>
+				</cell>
+				<cell id = "31">
+						<channelid> 24 </channelid>
+						<xcoord>  18.750 </xcoord>
+						<ycoord>  32.475 </ycoord>
+						<rhcpbias>  228.88 </rhcpbias>
+						<lhcpbias>    80.42 </lhcpbias>
+				</cell>
+			</cells>
+
+		</dbfplate>
+	</dbfplates>
+</ns2:plateconfig>

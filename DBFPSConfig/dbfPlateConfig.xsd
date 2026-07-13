@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:dbfplateconfig="urn:dbfplateconfig" targetNamespace="urn:dbfplateconfig" elementFormDefault="unqualified" >
+
+ <!-- DBF plate configuration -->
+
+  <xs:element name="plateconfig" >
+    <xs:complexType>
+              <xs:sequence>
+                <xs:element name="dbfplates" type="dbfplateconfig:dbfplates"  minOccurs="1" maxOccurs="1"/>
+             </xs:sequence>
+            <xs:attribute name="version" type="xs:string" use="required"/>
+      </xs:complexType>
+    </xs:element>
+
+  <xs:complexType name="dbfplates">
+        <xs:sequence>
+            <xs:element maxOccurs="unbounded" type="dbfplateconfig:dbfplate" name="dbfplate"/>
+        </xs:sequence>
+  </xs:complexType> 
+ 
+  <xs:complexType name="dbfplate">
+	<xs:all minOccurs="1">
+		<xs:element name="platefaceazimuth" type="xs:decimal"/>
+		<xs:element name="platefaceelevation" type="xs:decimal"/>
+		<xs:element name="platefacerotation" type="xs:decimal"/>
+    <xs:element name="platepolarization" type="xs:string"/>
+		<xs:element  name="fixedpointnumber" type="xs:integer"/>
+		<xs:element  name="fixedpoints" type="dbfplateconfig:fixedpoints"/>
+		<xs:element  name="cellnumber" type="xs:integer"/>
+		<xs:element  name="cells" type="dbfplateconfig:cells"/>
+	</xs:all>
+	<xs:attribute name="id" use="required" type="xs:string"/>
+  </xs:complexType> 
+
+  <xs:complexType name="fixedpoints">
+        <xs:sequence>
+            <xs:element maxOccurs="unbounded" type="dbfplateconfig:fixedpoint" name="fixedpoint"/>
+        </xs:sequence>
+  </xs:complexType> 
+ 
+  <xs:complexType name="fixedpoint">
+	<xs:all minOccurs="1">
+		<xs:element name="fixedpointaz" type="xs:decimal"/>
+		<xs:element name="fixedpointel" type="xs:decimal"/>
+		<xs:element name="fixedpointpol" type="xs:string"/>
+		<xs:element name="fixedpointdistance" type="xs:decimal"/>
+		<xs:element name="fixedpointenabled" type="xs:boolean"/>
+	</xs:all>
+	<xs:attribute name="id" use="required" type="xs:string"/>
+  </xs:complexType> 
+  
+   <xs:complexType name="cells">
+        <xs:sequence>
+            <xs:element maxOccurs="unbounded" type="dbfplateconfig:cell" name="cell"/>
+        </xs:sequence>
+  </xs:complexType> 
+ 
+  <xs:complexType name="cell">
+	<xs:all minOccurs="1">
+		<xs:element name="channelid" type="xs:integer"/>
+		<xs:element name="xcoord" type="xs:decimal"/>
+		<xs:element name="ycoord" type="xs:decimal"/>
+		<xs:element name="rhcpbias" type="xs:decimal"/>
+		<xs:element name="lhcpbias" type="xs:decimal"/>
+	</xs:all>
+	<xs:attribute name="id" use="required" type="xs:string"/>
+  </xs:complexType> 
+  
+</xs:schema>

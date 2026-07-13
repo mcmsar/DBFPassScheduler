@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DBFPassSchedulerConfig>
+
+  <!-- Input file locations -->
+  <Input>
+    <PassScheduleFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\DBFPSConfig\DBFPassSchedule.xml</PassScheduleFile>
+    <OrbitDataFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\datFiles\sarsat.txt</OrbitDataFile>
+    <SatNoradFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\datFiles\SatNorad.txt</SatNoradFile>
+    <!-- SatTLEDir must end with a backslash -->
+    <SatTLEDir>C:\Program Files (x86)\EMS Technologies\LUT Server\Config\</SatTLEDir>
+    <ReferenceBeaconFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\datFiles\DBF_ReferenceBeacons.csv</ReferenceBeaconFile>
+  </Input>
+
+  <!-- Output file locations -->
+  <Output>
+    <TraceLogFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\Output\PassScheduleTrace.csv</TraceLogFile>
+    <SunAzElFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\Output\SunAzEl.csv</SunAzElFile>
+    <!-- PhaseOutputDir must end with a backslash -->
+    <PhaseOutputDir>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\Output\DBFBufferPhase\</PhaseOutputDir>
+    <NullPointingFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\Output\NullFile_1.csv</NullPointingFile>
+  </Output>
+
+</DBFPassSchedulerConfig>
