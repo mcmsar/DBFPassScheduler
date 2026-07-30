@@ -62,7 +62,7 @@
 typedef struct _tagEMSDBFPASATCFG
 {
 	std::string szType;
-	float fFrequency;
+	double fFrequency;
 	std::string szPolarisation;
 	ULONG ulSatId;
 	ULONG ulPriority;

@@ -61,7 +61,7 @@ public:
 	void Initialize();
 	EMS_RESULT Initialize( std::vector<EMSDBFCOMBINERCFG>& vectDbfCombiner, WORD wCellNumber );
 
-	EMS_RESULT WritePassSchedule( EMSDBFPASSRECORD2 aPass, std::string szCombinerIP, bool bTestSun = false );
+	EMS_RESULT WritePassSchedule( EMSDBFPASSRECORD2 aPass, std::string szCombinerIP, bool bTestSun = false, const std::string& szConstellation = "" );
 	void EnsureHourFileOpen( int nHour, const std::string& szCombinerIP );
 
 	EMS_RESULT ReadRefBeacons( );

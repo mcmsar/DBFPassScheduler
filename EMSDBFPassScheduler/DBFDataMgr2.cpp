@@ -206,15 +206,21 @@ CEMSDBFDataMgr::EnsureHourFileOpen( int nHour, const std::string& szCombinerIP )
 	lstrcat( szFileSpec, szFileName );
 	m_lpPassFileCSV = fopen( szFileSpec, "wt" );
 	m_nCurrentHour = nHour;
-	if ( !m_lpPassFileCSV )
 	{
 		FILE* lpT = fopen( CDBFPSConfig::Instance().TraceLogFile().c_str(), "at" );
-		if ( lpT ) { fprintf( lpT, "CSV fopen failed: %s\n", szFileSpec ); fclose( lpT ); }
+		if ( lpT )
+		{
+			if ( m_lpPassFileCSV )
+				fprintf( lpT, "CSV opened: %s\n", szFileSpec );
+			else
+				fprintf( lpT, "CSV fopen failed: %s\n", szFileSpec );
+			fclose( lpT );
+		}
 	}
 }
 
 EMS_RESULT
-CEMSDBFDataMgr::WritePassSchedule( EMSDBFPASSRECORD2 PassRecord, std::string szCombinerIP, bool bTestSun )
+CEMSDBFDataMgr::WritePassSchedule( EMSDBFPASSRECORD2 PassRecord, std::string szCombinerIP, bool bTestSun, const std::string& szConstellation )
 {
 
 	EMS_RESULT hr = EMS_BAD_PARAM;
@@ -257,10 +263,16 @@ CEMSDBFDataMgr::WritePassSchedule( EMSDBFPASSRECORD2 PassRecord, std::string szC
 				lstrcat( szFileSpec, szFileName ); 
 
 				m_lpPassFileBIN = fopen( szFileSpec, "wb" );
-				if ( !m_lpPassFileBIN )
 				{
 					FILE* lpT = fopen( CDBFPSConfig::Instance().TraceLogFile().c_str(), "at" );
-					if ( lpT ) { fprintf( lpT, "BIN fopen failed: %s\n", szFileSpec ); fclose( lpT ); }
+					if ( lpT )
+					{
+						if ( m_lpPassFileBIN )
+							fprintf( lpT, "BIN opened: %s\n", szFileSpec );
+						else
+							fprintf( lpT, "BIN fopen failed: %s\n", szFileSpec );
+						fclose( lpT );
+					}
 				}
 
 				m_TimeStart.intTime = PassRecord.timestamp.intTime;
@@ -300,7 +312,7 @@ CEMSDBFDataMgr::WritePassSchedule( EMSDBFPASSRECORD2 PassRecord, std::string szC
 				tmFields.nMinute,
 				tmFields.nSecond );
 
-			iError = fprintf(m_lpPassFileCSV, "%I64d,%4d,%02d,%4d,%3d,%3d,%12.3f,%1d,%6.1f,%5.1f,%6.1f,%5.1f,%5.1f,%9.1f,%9.1f,%8.6f,",
+			iError = fprintf(m_lpPassFileCSV, "%I64d,%4d,%02d,%4d,%3d,%3d,%15.6f,%1d,%6.1f,%5.1f,%6.1f,%5.1f,%5.1f,%9.1f,%9.1f,%8.6f,",
 				PassRecord.timestamp,
 				PassRecord.ulLutID,
 				PassRecord.wPlateID,
@@ -344,7 +356,11 @@ CEMSDBFDataMgr::WritePassSchedule( EMSDBFPASSRECORD2 PassRecord, std::string szC
 				PassRecord.timeCoord.coord.velocity.fX,
 				PassRecord.timeCoord.coord.velocity.fY,
 				PassRecord.timeCoord.coord.velocity.fZ);
-		
+
+			// Trailing column identifying which constellation this record was tracking
+			// (matters when a combiner has a primary + fallback constellation configured).
+			iError = fprintf(m_lpPassFileCSV, ",%s", szConstellation.empty() ? "" : szConstellation.c_str() );
+
 			iError = fprintf(m_lpPassFileCSV, "\n" );
 
 			fflush(m_lpPassFileCSV );

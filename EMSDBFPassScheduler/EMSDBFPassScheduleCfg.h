@@ -9,7 +9,7 @@
 typedef struct _tagEMSDBFSATCFG
 {
 	std::string szType;
-	float fFrequency;
+	double fFrequency;
 	std::string szPolarisation;
 	ULONG ulSatId;
 	ULONG ulPriority;
@@ -47,6 +47,7 @@ typedef struct _tagEMSDBFPASSSCHEDULECFG
 	std::vector<EMSDBFSATCFG> vectLeoSats;
 	std::vector<EMSDBFSATCFG> vectGalileoSats;
 	std::vector<EMSDBFSATCFG> vectBeidouSats;
+	std::vector<EMSDBFSATCFG> vectGlonassSats;
 	std::vector<EMSDBFPLATECFG> vectDbfPlate;
  } 	EMSDBFPASSSCHEDULECFG;
 

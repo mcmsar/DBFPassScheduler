@@ -152,11 +152,75 @@ bool elevation_sorter(EMSDBFAZEL const& lhs, EMSDBFAZEL const& rhs) {
 	return lhs.degPlateElevation > rhs.degPlateElevation;
 }
 
+// Splits a combiner's <constellation> value (e.g. "BEIDOU,GLONASS") into a
+// primary constellation name and an optional secondary (fallback) name.
+static void _SplitConstellationNames( const std::string& szConfigured, std::string& szPrimary, std::string& szSecondary )
+{
+	size_t nComma = szConfigured.find(',');
+
+	std::string szFirst  = ( nComma == std::string::npos ) ? szConfigured : szConfigured.substr(0, nComma);
+	std::string szSecond  = ( nComma == std::string::npos ) ? std::string() : szConfigured.substr(nComma + 1);
+
+	// trim whitespace
+	const char* szWhitespace = " \t\r\n";
+	size_t nStart = szFirst.find_first_not_of(szWhitespace);
+	size_t nEnd   = szFirst.find_last_not_of(szWhitespace);
+	szPrimary = ( nStart == std::string::npos ) ? std::string() : szFirst.substr(nStart, nEnd - nStart + 1);
+
+	nStart = szSecond.find_first_not_of(szWhitespace);
+	nEnd   = szSecond.find_last_not_of(szWhitespace);
+	szSecondary = ( nStart == std::string::npos ) ? std::string() : szSecond.substr(nStart, nEnd - nStart + 1);
+}
+
+std::vector<EMSDBFPASATCFG>&
+CEMSDBFSchedulerService::_GetSatVectorForConstellation( const std::string& szConstellationName )
+{
+	static std::vector<EMSDBFPASATCFG> s_vectEmpty;
+
+	if ( szConstellationName == "BEIDOU" )       return m_vectBeidouSats;
+	else if ( szConstellationName == "GALILEO" ) return m_vectGalileoSats;
+	else if ( szConstellationName == "LEO" )     return m_vectLeoSats;
+	else if ( szConstellationName == "GLONASS" ) return m_vectGlonassSats;
+
+	return s_vectEmpty;
+}
+
+// Elevation thresholds a satellite must clear to actually be scheduled (mirrored
+// from the bPassOK check below, and shared with _HasSchedulableSatellite so the
+// fallback decision uses the exact same bar as the real scheduling decision).
+static const double c_dLEOMinPlateElevation = 5.0;
+static const double c_dMEOMinPlateElevation = 30.0;
+static const double c_dSatElevationMin = 5.0;
+static const double c_dSatElevationMax = 65.0;
+
+// True if at least one entry in aAzEls would actually clear the bPassOK criteria
+// used below -- i.e. would really be scheduled, not merely above the site/plate's
+// much looser 5-degree pipeline cutoff used to populate aAzEls in the first place.
+static bool _HasSchedulableSatellite( const EMSDBFAZEL* aAzEls, ULONG ulActual )
+{
+	for ( ULONG i = 0; i < ulActual; i++ )
+	{
+		if ( ( aAzEls[i].degSatElevation > c_dSatElevationMin ) && ( aAzEls[i].degSatElevation < c_dSatElevationMax ) )
+		{
+			if ( aAzEls[i].ulSatID < 200 )
+			{
+				if ( aAzEls[i].degPlateElevation > c_dLEOMinPlateElevation ) return true;
+			}
+			else if ( aAzEls[i].ulSatID > 400 )
+			{
+				if ( aAzEls[i].degPlateElevation > c_dMEOMinPlateElevation ) return true;
+			}
+		}
+	}
+	return false;
+}
+
 void
 CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTime )
 {
 	ULONG			  ulActual = 0;
 	EMSDBFAZEL	      aAzEls[culMaxSats]={{0}};
+	EMSDBFAZEL	      aAzElsSecondary[culMaxSats]={{0}};
 	EMSTLEDATA2		  aTLE2[culMaxSats]={{0}};
 
 	EMS_RESULT hr = EMS_OK;
@@ -169,6 +233,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 		{
 			m_oDMgr.Initialize();
 			CDBFPointingAngles oPA;
+			CDBFPointingAngles oPASecondary;
 			CDBFNullPointing oNP;
 			CEMSCoordSystem	oCoord;
 			//CEMSRangeRate oRange;
@@ -195,30 +260,33 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 			double dScaleFactor = 4096; // 2^12 temporary test RR
 			
 			std::vector<EMSDBFPASATCFG> ulVectAllSats;
-			std::string szCombinerIP;
+			std::vector<EMSDBFPASATCFG> ulVectAllSatsSecondary;
+			std::string szCombinerIP = m_vectDbfCombiner[nCombBoard].szIpAddress;
 
-			std::string szConstellation = m_vectDbfCombiner[nCombBoard].szConstellation;
+			// The <constellation> value may name a single constellation ("BEIDOU") or a
+			// primary and fallback pair ("BEIDOU,GLONASS"). When no primary satellite is
+			// in view at a given time step, the fallback constellation is tried instead.
+			std::string szPrimaryConstellation, szSecondaryConstellation;
+			_SplitConstellationNames( m_vectDbfCombiner[nCombBoard].szConstellation, szPrimaryConstellation, szSecondaryConstellation );
 
-			if (szConstellation == "BEIDOU")
+			ulVectAllSats = _GetSatVectorForConstellation( szPrimaryConstellation );
+
+			bool bHasSecondaryConstellation = !szSecondaryConstellation.empty();
+			if ( bHasSecondaryConstellation )
 			{
-				ulVectAllSats = m_vectBeidouSats;
-				szCombinerIP = m_vectDbfCombiner[nCombBoard].szIpAddress;
-			}
-			else if(szConstellation == "GALILEO")
-			{
-				ulVectAllSats = m_vectGalileoSats;
-				szCombinerIP = m_vectDbfCombiner[nCombBoard].szIpAddress;
-			}
-			else if(szConstellation == "LEO")
-			{
-				ulVectAllSats = m_vectLeoSats;
-				szCombinerIP = m_vectDbfCombiner[nCombBoard].szIpAddress;
+				ulVectAllSatsSecondary = _GetSatVectorForConstellation( szSecondaryConstellation );
 			}
 
 			hr = oPA.Initialize(ulVectAllSats, m_siteLocation);
 			hr = oNP.Initialize();
 
 			oPA.SetPlate(&m_vectPlates[nPlate]);
+
+			if ( bHasSecondaryConstellation )
+			{
+				hr = oPASecondary.Initialize(ulVectAllSatsSecondary, m_siteLocation);
+				oPASecondary.SetPlate(&m_vectPlates[nPlate]);
+			}
 
 			m_wPlateId = nPlate + 1;
 
@@ -239,7 +307,14 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 				}
 
 				memset( aAzEls, 0, sizeof(EMSDBFAZEL) * culMaxSats);
-			
+
+				// Tracks which constellation's data is actually driving this time step's
+				// pass record, so it can be logged and so downstream lookups (satellite
+				// frequency/polarization, wavelength, ECI vector) use the right source.
+				CDBFPointingAngles* pActivePA = &oPA;
+				std::vector<EMSDBFPASATCFG>* pActiveSatVector = &ulVectAllSats;
+				std::string szActiveConstellation = szPrimaryConstellation;
+
 				if( m_vectPlates[nPlate].wFixedPointNumber  > 0 )
 				{
 					oPA.GetFixedPointSched( aAzEls, &ulActual );
@@ -251,7 +326,32 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 					hr = oPA.GetPlateAZELs( aAzEls, &ulActual );
 					hr = oPA.GetConstellationAZELs( aAzEls, &ulActual );
 					hr = oPA.GetDBFPhase( aAzEls, &ulActual );
-				
+
+					if ( bHasSecondaryConstellation && !_HasSchedulableSatellite( aAzEls, ulActual ) )
+					{
+						// Primary constellation has nothing that will actually clear the
+						// scheduling threshold at this time step (it may still have shown
+						// up in aAzEls/ulActual above -- that only reflects the much looser
+						// 5-degree pipeline cutoff). Try the secondary constellation instead.
+						ULONG ulActualSecondary = 0;
+						memset( aAzElsSecondary, 0, sizeof(EMSDBFAZEL) * culMaxSats);
+
+						hr = oPASecondary.GetSatelliteAZELs( timeNow, aAzElsSecondary, &ulActualSecondary );
+						hr = oPASecondary.CheckLEOMEO( aAzElsSecondary, &ulActualSecondary );
+						hr = oPASecondary.GetPlateAZELs( aAzElsSecondary, &ulActualSecondary );
+						hr = oPASecondary.GetConstellationAZELs( aAzElsSecondary, &ulActualSecondary );
+						hr = oPASecondary.GetDBFPhase( aAzElsSecondary, &ulActualSecondary );
+
+						if ( _HasSchedulableSatellite( aAzElsSecondary, ulActualSecondary ) )
+						{
+							memcpy( aAzEls, aAzElsSecondary, sizeof(EMSDBFAZEL) * ulActualSecondary );
+							ulActual = ulActualSecondary;
+							pActivePA = &oPASecondary;
+							pActiveSatVector = &ulVectAllSatsSecondary;
+							szActiveConstellation = szSecondaryConstellation;
+						}
+					}
+
 					if (ulActual > 5)
 					{
 						float x = 1.0;
@@ -272,14 +372,10 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 					PassRecord.timestamp  = timeNow;
 					//PassRecord.wAntennaID = m_vectPlates[nPlate].wPlateID;
 					PassRecord.wAntennaID = m_vectDbfCombiner[nCombBoard].wCombinerId;
-					hr = m_oDMgr.WritePassSchedule( PassRecord, szCombinerIP, bTestSun );
+					hr = m_oDMgr.WritePassSchedule( PassRecord, szCombinerIP, bTestSun, szActiveConstellation );
 				}
 				else if ( ulActual > 0 )
 				{
-					double dLEOelevation = 5.0;
-					double dMEOelevation = 30.0;
-					double dSATelevationMin = 5.0;
-					double dSATelevationMax = 65.0;
 					bool bPassOK = false;
 
 					std::sort(aAzEls, aAzEls + ulActual, &elevation_sorter);
@@ -290,7 +386,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 					
 						PassRecord.ulLutID	= m_ulLutId;
 						
-						int nSatType = oPA.GetConstellationType( aAzEls[j].ulSatID );
+						int nSatType = pActivePA->GetConstellationType( aAzEls[j].ulSatID );
 
 						if ( ( aAzEls[j].ulSatID < 300 ) && ( ulActual == 1 ) )
 						{
@@ -303,16 +399,16 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 
 						bPassOK = false;
 						// Check satellite elevation
-						if ( ( aAzEls[j].degSatElevation > dSATelevationMin )
-							  && ( aAzEls[j].degSatElevation < dSATelevationMax ) ) // TSI in-house DBF only (blockage)
+						if ( ( aAzEls[j].degSatElevation > c_dSatElevationMin )
+							  && ( aAzEls[j].degSatElevation < c_dSatElevationMax ) ) // TSI in-house DBF only (blockage)
 						{
 							if ( aAzEls[j].ulSatID < 200 )
 							{
-								if( aAzEls[j].degPlateElevation > dLEOelevation ) bPassOK = true;
+								if( aAzEls[j].degPlateElevation > c_dLEOMinPlateElevation ) bPassOK = true;
 							}
 							else if( aAzEls[j].ulSatID > 400 )
 							{
-							   if ( aAzEls[j].degPlateElevation > dMEOelevation ) bPassOK = true;
+							   if ( aAzEls[j].degPlateElevation > c_dMEOMinPlateElevation ) bPassOK = true;
 							}
 						}
 
@@ -324,12 +420,12 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 							PassRecord.ulSatID         = aAzEls[j].ulSatID;
 							PassRecord.ulPassID        = aAzEls[j].ulPassID;
 
-							for ( ULONG s = 0; s < ulVectAllSats.size(); s++ )
+							for ( ULONG s = 0; s < pActiveSatVector->size(); s++ )
 							{
-								if ( ulVectAllSats[s].ulSatId == aAzEls[j].ulSatID )
+								if ( (*pActiveSatVector)[s].ulSatId == aAzEls[j].ulSatID )
 								{
-									PassRecord.fDownFrequency = ulVectAllSats[s].fFrequency;
-									PassRecord.wPolarization  = ( ulVectAllSats[s].szPolarisation == "RHCP" ) ? 1 : 0;
+									PassRecord.fDownFrequency = (EMSDBFFREQ)(*pActiveSatVector)[s].fFrequency;
+									PassRecord.wPolarization  = ( (*pActiveSatVector)[s].szPolarisation == "RHCP" ) ? 1 : 0;
 									break;
 								}
 							}
@@ -358,7 +454,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 								sitePosition = oCoord.ToEarthFixed( m_siteLocation.locnAntenna );
 							    
 								bool bEarthFixed = true;
-								hr = oPA.GetSatelliteVectorEF( timeNow,  PassRecord.ulSatID, &timeCoord );
+								hr = pActivePA->GetSatelliteVectorEF( timeNow,  PassRecord.ulSatID, &timeCoord );
 								
 								// Check Reference Beacon visibibility
 								vDiff = CEMSVector::Sub( timeCoord.coord.radius, refPosition);
@@ -381,7 +477,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 									double dNominalUpFreq = (double)PassRecord.fRefTxFrequency + 406.0e6;
 									fUpDoppler = (dNominalUpFreq / (1.0 + UPRangeRate.fRangeRate / c_dVelocityOfLight) - dNominalUpFreq);
 
-									oPA.GetConstellation( PassRecord.ulSatID, &dWaveLength, &dConstellationFrequency );
+									pActivePA->GetConstellation( PassRecord.ulSatID, &dWaveLength, &dConstellationFrequency );
 			
 									fDownFrequency = dConstellationFrequency + (double)(PassRecord.fRefTxFrequency -50000.0 + fUpDoppler); 
 									
@@ -391,7 +487,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 
 								}
 							}
-							hr = m_oDMgr.WritePassSchedule( PassRecord, szCombinerIP, bTestSun );
+							hr = m_oDMgr.WritePassSchedule( PassRecord, szCombinerIP, bTestSun, szActiveConstellation );
 						}
 					}
 
@@ -590,10 +686,12 @@ CEMSDBFSchedulerService::_Init()
 			m_vectLeoSats.clear();
 			m_vectGalileoSats.clear();
 			m_vectBeidouSats.clear();
+			m_vectGlonassSats.clear();
 
 			int nLeoSatCount = oPassCfg.vectLeoSats.size();
 			int nGaliLeoCount = oPassCfg.vectGalileoSats.size();
 			int nBeidouSatCount = oPassCfg.vectBeidouSats.size();
+			int nGlonassSatCount = oPassCfg.vectGlonassSats.size();
 
 			for(int i =0; i < nLeoSatCount; i++)
 			{
@@ -630,6 +728,17 @@ CEMSDBFSchedulerService::_Init()
 				satCfg.ulSatId = oPassCfg.vectBeidouSats[k].ulSatId;
 				satCfg.ulPriority = oPassCfg.vectBeidouSats[k].ulPriority;
 				m_vectBeidouSats.push_back(satCfg);
+			}
+
+			for(int m = 0; m < nGlonassSatCount; m++)
+			{
+				EMSDBFPASATCFG satCfg;
+				satCfg.szType = oPassCfg.vectGlonassSats[m].szType;
+				satCfg.fFrequency = oPassCfg.vectGlonassSats[m].fFrequency;
+				satCfg.szPolarisation = oPassCfg.vectGlonassSats[m].szPolarisation;
+				satCfg.ulSatId = oPassCfg.vectGlonassSats[m].ulSatId;
+				satCfg.ulPriority = oPassCfg.vectGlonassSats[m].ulPriority;
+				m_vectGlonassSats.push_back(satCfg);
 			}
 		}
 	}

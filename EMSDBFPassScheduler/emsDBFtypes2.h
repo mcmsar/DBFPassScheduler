@@ -124,6 +124,22 @@ typedef struct _tagREFERENCEBEACONS
 
 typedef struct _tagEMSDBFPASSRECORDS __RPC_FAR *LPEMSDBFPASSRECORDS;
 
+// Wire-format precision for EMSDBFPASSRECORD2::fDownFrequency. EMSSPServer.dll
+// (the downstream Signal Conditioner) expects this field as a 4-byte float --
+// widening it to double changes the record's byte layout and crashes that
+// process (STATUS_STACK_BUFFER_OVERRUN, confirmed 2026-07-30). Only flip this
+// to 1 once every consumer of the wire format -- scheduler, collector, AND the
+// SP Server -- has been rebuilt to agree on the wider layout. This must be
+// defined identically here and in the collector's emsDBFtypes2.h.
+#ifndef EMSDBF_FREQUENCY_DOUBLE
+#define EMSDBF_FREQUENCY_DOUBLE 0
+#endif
+
+#if EMSDBF_FREQUENCY_DOUBLE
+typedef double EMSDBFFREQ;
+#else
+typedef float EMSDBFFREQ;
+#endif
 
 typedef struct _tagEMSDBFPASSRECORD2
 {
@@ -134,7 +150,7 @@ typedef struct _tagEMSDBFPASSRECORD2
 	WORD  wProcessID;		// Process Identifier: 0 to 5  (see process definition).
 	WORD  wPlateID;			// Plate Identifier number, defining an array plate ( up to 8 plates)
 	WORD  wAntennaID;		// Antenna Identifier number, defining a beam pattern ( up to 4 beams allowed)
-	float fDownFrequency;	// Constellation downlink frequency (same unit as configured in DBFPassScheduler.xml)
+	EMSDBFFREQ fDownFrequency;	// Constellation downlink frequency (same unit as configured in DBFPassScheduler.xml)
 	WORD  wPolarization;	// Signal polarization: 0 = LHCP, 1 = RHCP
 	float fAzimuth;			// Site azimuth pointing angle to satellite (degN)
 	float fElevation;		// Site elevation pointing angle to satellite (deg)

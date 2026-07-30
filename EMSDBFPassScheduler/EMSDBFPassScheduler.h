@@ -56,6 +56,7 @@ class CEMSDBFSchedulerService : public CEMSService
 		void _DoIdle();
 		bool _TimeToGeneratePassSched();
 		void _GenerateNewPassSched( EMSTIME startTime, EMSTIME endTime );
+		std::vector<EMSDBFPASATCFG>& _GetSatVectorForConstellation( const std::string& szConstellationName );
 
 	protected:
 
@@ -85,6 +86,7 @@ class CEMSDBFSchedulerService : public CEMSService
 		std::vector<EMSDBFPASATCFG> m_vectLeoSats;
 		std::vector<EMSDBFPASATCFG> m_vectGalileoSats;
 		std::vector<EMSDBFPASATCFG> m_vectBeidouSats;
+		std::vector<EMSDBFPASATCFG> m_vectGlonassSats;
 
 		EMSDBFPASITELOCATIONCFG	m_siteLocation;
 

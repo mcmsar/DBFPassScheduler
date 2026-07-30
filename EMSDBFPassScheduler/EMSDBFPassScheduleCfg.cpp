@@ -139,7 +139,7 @@ CEMSDBFPassScheduleCfg::ReadDBFConfigFromXML(const std::string szInFile)
 				EMSDBFSATCFG oSatCfg;
 
 				oSatCfg.szType = str;
-				oSatCfg.fFrequency = (float)iter->frequency();
+				oSatCfg.fFrequency = (double)iter->frequency();
 				oSatCfg.szPolarisation = iter->polarisation();
 
 				for(dbfconfig::constellation::satellite_const_iterator satIter = iter->satellite().begin();
@@ -157,7 +157,7 @@ CEMSDBFPassScheduleCfg::ReadDBFConfigFromXML(const std::string szInFile)
 				EMSDBFSATCFG oSatCfg;
 
 				oSatCfg.szType = str;
-				oSatCfg.fFrequency = (float)iter->frequency();
+				oSatCfg.fFrequency = (double)iter->frequency();
 				oSatCfg.szPolarisation = iter->polarisation();
 
 				for(dbfconfig::constellation::satellite_const_iterator satIter = iter->satellite().begin();
@@ -175,7 +175,7 @@ CEMSDBFPassScheduleCfg::ReadDBFConfigFromXML(const std::string szInFile)
 				EMSDBFSATCFG oSatCfg;
 
 				oSatCfg.szType = str;
-				oSatCfg.fFrequency = (float)iter->frequency();
+				oSatCfg.fFrequency = (double)iter->frequency();
 				oSatCfg.szPolarisation = iter->polarisation();
 
 				for(dbfconfig::constellation::satellite_const_iterator satIter = iter->satellite().begin();
@@ -186,6 +186,24 @@ CEMSDBFPassScheduleCfg::ReadDBFConfigFromXML(const std::string szInFile)
 					oSatCfg.ulSatId = ulGaliLeoSatId;
 					oSatCfg.ulPriority = satIter->priority();
 					m_dbfPassScheduleCfg.vectBeidouSats.push_back(oSatCfg);
+				}
+			}
+			else if(str == "GLONASS")
+			{
+				EMSDBFSATCFG oSatCfg;
+
+				oSatCfg.szType = str;
+				oSatCfg.fFrequency = (double)iter->frequency();
+				oSatCfg.szPolarisation = iter->polarisation();
+
+				for(dbfconfig::constellation::satellite_const_iterator satIter = iter->satellite().begin();
+																		satIter != iter->satellite().end(); satIter++)
+				{
+					std::string szSatId = satIter->id();
+					ULONG ulGlonassSatId = std::stoul (szSatId,nullptr,0);
+					oSatCfg.ulSatId = ulGlonassSatId;
+					oSatCfg.ulPriority = satIter->priority();
+					m_dbfPassScheduleCfg.vectGlonassSats.push_back(oSatCfg);
 				}
 			}
 
