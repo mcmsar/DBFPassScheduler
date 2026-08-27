@@ -696,6 +696,114 @@ namespace dbfconfig
     void
     plateminelevation (const plateminelevation_type& x);
 
+    // plateminazimuth
+    // 
+    typedef ::xml_schema::decimal plateminazimuth_type;
+    typedef ::xsd::cxx::tree::optional< plateminazimuth_type > plateminazimuth_optional;
+    typedef ::xsd::cxx::tree::traits< plateminazimuth_type, char, ::xsd::cxx::tree::schema_type::decimal > plateminazimuth_traits;
+
+    const plateminazimuth_optional&
+    plateminazimuth () const;
+
+    plateminazimuth_optional&
+    plateminazimuth ();
+
+    void
+    plateminazimuth (const plateminazimuth_type& x);
+
+    void
+    plateminazimuth (const plateminazimuth_optional& x);
+
+    // platemaxazimuth
+    // 
+    typedef ::xml_schema::decimal platemaxazimuth_type;
+    typedef ::xsd::cxx::tree::optional< platemaxazimuth_type > platemaxazimuth_optional;
+    typedef ::xsd::cxx::tree::traits< platemaxazimuth_type, char, ::xsd::cxx::tree::schema_type::decimal > platemaxazimuth_traits;
+
+    const platemaxazimuth_optional&
+    platemaxazimuth () const;
+
+    platemaxazimuth_optional&
+    platemaxazimuth ();
+
+    void
+    platemaxazimuth (const platemaxazimuth_type& x);
+
+    void
+    platemaxazimuth (const platemaxazimuth_optional& x);
+
+    // satminelevation
+    // 
+    typedef ::xml_schema::decimal satminelevation_type;
+    typedef ::xsd::cxx::tree::optional< satminelevation_type > satminelevation_optional;
+    typedef ::xsd::cxx::tree::traits< satminelevation_type, char, ::xsd::cxx::tree::schema_type::decimal > satminelevation_traits;
+
+    const satminelevation_optional&
+    satminelevation () const;
+
+    satminelevation_optional&
+    satminelevation ();
+
+    void
+    satminelevation (const satminelevation_type& x);
+
+    void
+    satminelevation (const satminelevation_optional& x);
+
+    // satmaxelevation
+    // 
+    typedef ::xml_schema::decimal satmaxelevation_type;
+    typedef ::xsd::cxx::tree::optional< satmaxelevation_type > satmaxelevation_optional;
+    typedef ::xsd::cxx::tree::traits< satmaxelevation_type, char, ::xsd::cxx::tree::schema_type::decimal > satmaxelevation_traits;
+
+    const satmaxelevation_optional&
+    satmaxelevation () const;
+
+    satmaxelevation_optional&
+    satmaxelevation ();
+
+    void
+    satmaxelevation (const satmaxelevation_type& x);
+
+    void
+    satmaxelevation (const satmaxelevation_optional& x);
+
+    // plateminelevationleo
+    // 
+    typedef ::xml_schema::decimal plateminelevationleo_type;
+    typedef ::xsd::cxx::tree::optional< plateminelevationleo_type > plateminelevationleo_optional;
+    typedef ::xsd::cxx::tree::traits< plateminelevationleo_type, char, ::xsd::cxx::tree::schema_type::decimal > plateminelevationleo_traits;
+
+    const plateminelevationleo_optional&
+    plateminelevationleo () const;
+
+    plateminelevationleo_optional&
+    plateminelevationleo ();
+
+    void
+    plateminelevationleo (const plateminelevationleo_type& x);
+
+    void
+    plateminelevationleo (const plateminelevationleo_optional& x);
+
+    // plateminelevationmeo
+    // 
+    typedef ::xml_schema::decimal plateminelevationmeo_type;
+    typedef ::xsd::cxx::tree::optional< plateminelevationmeo_type > plateminelevationmeo_optional;
+    typedef ::xsd::cxx::tree::traits< plateminelevationmeo_type, char, ::xsd::cxx::tree::schema_type::decimal > plateminelevationmeo_traits;
+
+    const plateminelevationmeo_optional&
+    plateminelevationmeo () const;
+
+    plateminelevationmeo_optional&
+    plateminelevationmeo ();
+
+    void
+    plateminelevationmeo (const plateminelevationmeo_type& x);
+
+    void
+    plateminelevationmeo (const plateminelevationmeo_optional& x);
+
     // plateminseparationangle
     // 
     typedef ::xml_schema::decimal plateminseparationangle_type;
@@ -802,6 +910,12 @@ namespace dbfconfig
     protected:
     ::xsd::cxx::tree::one< plateconfigfile_type > plateconfigfile_;
     ::xsd::cxx::tree::one< plateminelevation_type > plateminelevation_;
+    plateminazimuth_optional plateminazimuth_;
+    platemaxazimuth_optional platemaxazimuth_;
+    satminelevation_optional satminelevation_;
+    satmaxelevation_optional satmaxelevation_;
+    plateminelevationleo_optional plateminelevationleo_;
+    plateminelevationmeo_optional plateminelevationmeo_;
     ::xsd::cxx::tree::one< plateminseparationangle_type > plateminseparationangle_;
     ::xsd::cxx::tree::one< location_type > location_;
     ::xsd::cxx::tree::one< combiners_type > combiners_;

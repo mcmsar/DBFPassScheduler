@@ -156,7 +156,7 @@ CEMSDBFDataMgr::Initialize( std::vector<EMSDBFCOMBINERCFG>& vectDbfCombiner, WOR
 			nr.lpRemoteName = szServerPathBIN;
 			dwRetVal = WNetAddConnection2(&nr, lpPassword, lpUserid, 0);
 			
-			FILE* lpTraceFILE = fopen(CDBFPSConfig::Instance().TraceLogFile().c_str(),"at");
+			FILE* lpTraceFILE = CDBFPSConfig::Instance().OpenTraceLog();
 			if (lpTraceFILE)
 			{
 				if (dwRetVal == NO_ERROR)
@@ -207,7 +207,7 @@ CEMSDBFDataMgr::EnsureHourFileOpen( int nHour, const std::string& szCombinerIP )
 	m_lpPassFileCSV = fopen( szFileSpec, "wt" );
 	m_nCurrentHour = nHour;
 	{
-		FILE* lpT = fopen( CDBFPSConfig::Instance().TraceLogFile().c_str(), "at" );
+		FILE* lpT = CDBFPSConfig::Instance().OpenTraceLog();
 		if ( lpT )
 		{
 			if ( m_lpPassFileCSV )
@@ -264,7 +264,7 @@ CEMSDBFDataMgr::WritePassSchedule( EMSDBFPASSRECORD2 PassRecord, std::string szC
 
 				m_lpPassFileBIN = fopen( szFileSpec, "wb" );
 				{
-					FILE* lpT = fopen( CDBFPSConfig::Instance().TraceLogFile().c_str(), "at" );
+					FILE* lpT = CDBFPSConfig::Instance().OpenTraceLog();
 					if ( lpT )
 					{
 						if ( m_lpPassFileBIN )
@@ -319,7 +319,7 @@ CEMSDBFDataMgr::WritePassSchedule( EMSDBFPASSRECORD2 PassRecord, std::string szC
 				PassRecord.wProcessID,
 				PassRecord.wAntennaID,
 				PassRecord.ulSatID,
-				PassRecord.fDownFrequency,
+				EMSDBF_MHZ_FROM_HZ( PassRecord.ulDownFrequencyHz ), // "%15.6f" -- CSV stays in MHz
 				PassRecord.wPolarization,
 				PassRecord.fAzimuth,
 				PassRecord.fElevation,
@@ -398,7 +398,7 @@ CEMSDBFDataMgr::ReadRefBeacons( )
 	if( &m_RefBeacons )
 	{
 		FILE *lpRefbeacon = fopen( CDBFPSConfig::Instance().ReferenceBeaconFile().c_str(),"rt" );
-		FILE *lpTraceFILE =  fopen(CDBFPSConfig::Instance().TraceLogFile().c_str(),"at");
+		FILE *lpTraceFILE =  CDBFPSConfig::Instance().OpenTraceLog();
 
 		if ( !lpRefbeacon )
 		{

@@ -3,21 +3,59 @@
 
   <!-- Input file locations -->
   <Input>
-    <PassScheduleFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\DBFPSConfig\DBFPassSchedule.xml</PassScheduleFile>
-    <OrbitDataFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\datFiles\sarsat.txt</OrbitDataFile>
-    <SatNoradFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\datFiles\SatNorad.txt</SatNoradFile>
+    <PassScheduleFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\DBFPSConfig\DBFPassSchedule.xml</PassScheduleFile>
+    <OrbitDataFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\datFiles\sarsat.txt</OrbitDataFile>
+    <SatNoradFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\datFiles\SatNorad.txt</SatNoradFile>
     <!-- SatTLEDir must end with a backslash -->
-    <SatTLEDir>C:\Program Files (x86)\EMS Technologies\LUT Server\Config\</SatTLEDir>
-    <ReferenceBeaconFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\datFiles\DBF_ReferenceBeacons.csv</ReferenceBeaconFile>
+    <SatTLEDir>C:\Users\joshua.rehm\TSiDBFPassScheduler\datFiles\</SatTLEDir>
+    <ReferenceBeaconFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\datFiles\DBF_ReferenceBeacons.csv</ReferenceBeaconFile>
   </Input>
 
   <!-- Output file locations -->
   <Output>
-    <TraceLogFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\Output\PassScheduleTrace.csv</TraceLogFile>
-    <SunAzElFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\Output\SunAzEl.csv</SunAzElFile>
+    <TraceLogFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\Output\PassScheduleTrace.csv</TraceLogFile>
+
+    <!--
+        Days of trace output to keep in TraceLogFile.
+
+        The scheduler appends a block to the trace on every generation cycle and
+        never overwrites, so without this the file grows without bound. Before a
+        trace write (rate limited to once an hour) anything older than this is
+        dropped from the front of the file.
+
+        Trimming happens in whole generation cycles, anchored on the dated
+        "Generating new pass schedule" line each cycle begins with, so a block is
+        never left half present. If the scheduler has not run for longer than this,
+        the most recent cycle is kept rather than emptying the file.
+
+        Set to 0 to disable trimming entirely.
+    -->
+    <TraceRetentionDays>7</TraceRetentionDays>
+    <SunAzElFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\Output\SunAzEl.csv</SunAzElFile>
     <!-- PhaseOutputDir must end with a backslash -->
-    <PhaseOutputDir>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\Output\DBFBufferPhase\</PhaseOutputDir>
-    <NullPointingFile>D:\TSi_DBF\trunk\EMSDBFPassScheduler_06_17_26\Output\NullFile_1.csv</NullPointingFile>
+    <PhaseOutputDir>C:\Users\joshua.rehm\TSiDBFPassScheduler\Output\DBFBufferPhase\</PhaseOutputDir>
+    <NullPointingFile>C:\Users\joshua.rehm\TSiDBFPassScheduler\Output\NullFile_1.csv</NullPointingFile>
   </Output>
+
+  <!-- Scheduling limits -->
+  <Scheduling>
+    <!--
+        Maximum satellites scheduled per time step.
+
+        Capped at compile time by DBF_MAX_SATELLITES in emsDBFtypes2.h, currently 5,
+        because it also dimensions the null-pointing steering matrices. A larger
+        value here is clamped, not honoured.
+
+        Keep this at or below DBF_MAX_SATELLITES in the collector's emsDBFtypes.h.
+        The collector stores at most that many pass records per second
+        (CEMSDBFDataMgr::_AddPassRecord) and silently drops the rest, so publishing
+        more than it can hold just moves the truncation somewhere less visible.
+
+        Satellites are sorted by descending plate elevation before this cap is
+        applied, so the highest-elevation ones are kept. Truncation is logged to
+        TraceLogFile.
+    -->
+    <MaxSatellites>3</MaxSatellites>
+  </Scheduling>
 
 </DBFPassSchedulerConfig>

@@ -36,6 +36,20 @@ typedef struct _tagEMSDBFPLATECFG
 	WORD wPlateId; 
 	std::string szPlateCfgFile;
 	float fPlateMinElevation;
+	// Azimuth acceptance window at the plate, degrees north. Defaults to 0/360 --
+	// the full circle -- when the XML omits the limits, so an unmodified config
+	// keeps the pre-existing behaviour of no azimuth gating.
+	float fPlateMinAzimuth;
+	float fPlateMaxAzimuth;
+	// Thresholds a satellite must clear to actually be scheduled, as opposed to
+	// fPlateMinElevation above, which only decides what enters the pipeline. The
+	// satellite elevation pair bounds the angle above the local horizon; the plate
+	// pair are floors on the angle off the plate boresight, picked per constellation
+	// class. Defaults match the values these used to have as compile-time constants.
+	float fSatMinElevation;
+	float fSatMaxElevation;
+	float fPlateMinElevationLEO;
+	float fPlateMinElevationMEO;
 	float fPlateMinSeparationAngle;
 	EMSDBFPLATELOCATION plateLocation;
 	std::vector<EMSDBFCOMBINERCFG> vectDbfCombiner; 

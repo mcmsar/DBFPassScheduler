@@ -109,7 +109,7 @@ CEMSDBFSchedulerService::_DoIdle()
 
 		oEndTime.AddHours(23.0);
 
-		FILE *lpTraceFILE =  fopen(CDBFPSConfig::Instance().TraceLogFile().c_str(),"at");
+		FILE *lpTraceFILE =  CDBFPSConfig::Instance().OpenTraceLog();
 		if (lpTraceFILE)
 		{
 			fprintf(lpTraceFILE,"Generating new pass schedule : %4d/%2d/%2d %2d:%2d:%2d\n",
@@ -185,32 +185,45 @@ CEMSDBFSchedulerService::_GetSatVectorForConstellation( const std::string& szCon
 	return s_vectEmpty;
 }
 
-// Elevation thresholds a satellite must clear to actually be scheduled (mirrored
-// from the bPassOK check below, and shared with _HasSchedulableSatellite so the
-// fallback decision uses the exact same bar as the real scheduling decision).
-static const double c_dLEOMinPlateElevation = 5.0;
-static const double c_dMEOMinPlateElevation = 30.0;
-static const double c_dSatElevationMin = 5.0;
-static const double c_dSatElevationMax = 65.0;
+// Elevation thresholds a satellite must clear to actually be scheduled. These used
+// to be compile-time constants here; they now come from <satminelevation>,
+// <satmaxelevation>, <plateminelevationleo> and <plateminelevationmeo> on the plate
+// in DBFPassSchedule.xml, defaulted in CEMSDBFPassScheduleCfg to the values that
+// were hardcoded. This is the single implementation of the criteria, so the fallback
+// decision in _HasSchedulableSatellite and the real bPassOK decision below cannot
+// drift apart.
+static bool _IsSchedulable( const EMSDBFAZEL& azel, const EMSDBFPLATECFG& plateCfg )
+{
+	// Satellite elevation above the local horizon. The upper bound is a site
+	// blockage limit, not a geometry one.
+	if ( ( azel.degSatElevation <= plateCfg.fSatMinElevation )
+		|| ( azel.degSatElevation >= plateCfg.fSatMaxElevation ) )
+	{
+		return false;
+	}
+
+	// Floor on the angle off the plate boresight, by constellation class. Ids
+	// between 200 and 400 match neither class and are never schedulable here.
+	if ( azel.ulSatID < 200 )
+	{
+		return azel.degPlateElevation > plateCfg.fPlateMinElevationLEO;
+	}
+	else if ( azel.ulSatID > 400 )
+	{
+		return azel.degPlateElevation > plateCfg.fPlateMinElevationMEO;
+	}
+
+	return false;
+}
 
 // True if at least one entry in aAzEls would actually clear the bPassOK criteria
 // used below -- i.e. would really be scheduled, not merely above the site/plate's
-// much looser 5-degree pipeline cutoff used to populate aAzEls in the first place.
-static bool _HasSchedulableSatellite( const EMSDBFAZEL* aAzEls, ULONG ulActual )
+// much looser pipeline cutoff used to populate aAzEls in the first place.
+static bool _HasSchedulableSatellite( const EMSDBFAZEL* aAzEls, ULONG ulActual, const EMSDBFPLATECFG& plateCfg )
 {
 	for ( ULONG i = 0; i < ulActual; i++ )
 	{
-		if ( ( aAzEls[i].degSatElevation > c_dSatElevationMin ) && ( aAzEls[i].degSatElevation < c_dSatElevationMax ) )
-		{
-			if ( aAzEls[i].ulSatID < 200 )
-			{
-				if ( aAzEls[i].degPlateElevation > c_dLEOMinPlateElevation ) return true;
-			}
-			else if ( aAzEls[i].ulSatID > 400 )
-			{
-				if ( aAzEls[i].degPlateElevation > c_dMEOMinPlateElevation ) return true;
-			}
-		}
+		if ( _IsSchedulable( aAzEls[i], plateCfg ) ) return true;
 	}
 	return false;
 }
@@ -225,8 +238,18 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 
 	EMS_RESULT hr = EMS_OK;
 
+	// The plate's acceptance window and its scheduling thresholds live in
+	// DBFPassSchedule.xml alongside the plate's location, not in the plate file that
+	// SetPlate() below comes from. m_ulPlates is this vector's own size, so the index
+	// is in range; the guard only covers a malformed config.
+	const std::vector<EMSDBFPLATECFG>& vectPlateCfg = m_oDBFPassSchedCfg.GetDbfPassScheduleCfg().vectDbfPlate;
+
 	for(ULONG nPlate = 0; nPlate < m_ulPlates; nPlate++)
 	{
+		if ( nPlate >= vectPlateCfg.size() ) continue;
+
+		const EMSDBFPLATECFG& plateCfg = vectPlateCfg[nPlate];
+
 		ULONG nCombBoardCount  = m_vectDbfCombiner.size();
 
 		for(ULONG nCombBoard = 0; nCombBoard < nCombBoardCount; nCombBoard++)
@@ -288,6 +311,17 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 				oPASecondary.SetPlate(&m_vectPlates[nPlate]);
 			}
 
+			oPA.SetPlateLimits( plateCfg.fPlateMinElevation,
+								plateCfg.fPlateMinAzimuth,
+								plateCfg.fPlateMaxAzimuth );
+
+			if ( bHasSecondaryConstellation )
+			{
+				oPASecondary.SetPlateLimits( plateCfg.fPlateMinElevation,
+											 plateCfg.fPlateMinAzimuth,
+											 plateCfg.fPlateMaxAzimuth );
+			}
+
 			m_wPlateId = nPlate + 1;
 
 			ULONG irec = 0;
@@ -327,7 +361,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 					hr = oPA.GetConstellationAZELs( aAzEls, &ulActual );
 					hr = oPA.GetDBFPhase( aAzEls, &ulActual );
 
-					if ( bHasSecondaryConstellation && !_HasSchedulableSatellite( aAzEls, ulActual ) )
+					if ( bHasSecondaryConstellation && !_HasSchedulableSatellite( aAzEls, ulActual, plateCfg ) )
 					{
 						// Primary constellation has nothing that will actually clear the
 						// scheduling threshold at this time step (it may still have shown
@@ -342,7 +376,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 						hr = oPASecondary.GetConstellationAZELs( aAzElsSecondary, &ulActualSecondary );
 						hr = oPASecondary.GetDBFPhase( aAzElsSecondary, &ulActualSecondary );
 
-						if ( _HasSchedulableSatellite( aAzElsSecondary, ulActualSecondary ) )
+						if ( _HasSchedulableSatellite( aAzElsSecondary, ulActualSecondary, plateCfg ) )
 						{
 							memcpy( aAzEls, aAzElsSecondary, sizeof(EMSDBFAZEL) * ulActualSecondary );
 							ulActual = ulActualSecondary;
@@ -380,7 +414,37 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 
 					std::sort(aAzEls, aAzEls + ulActual, &elevation_sorter);
 
-					for ( ULONG j = 0; j < ulActual; j++ )
+					// Publish at most MaxSatellites records for this time step. The sort
+					// above is by descending plate elevation, so the ones dropped are the
+					// lowest-elevation satellites. These are the same records the collector
+					// was already discarding on read -- CEMSDBFDataMgr::_AddPassRecord stops
+					// at DBF_MAX_SATELLITES per second -- so this does not lose anything that
+					// was reaching the beamformer. It just makes the cut deliberate and
+					// visible here instead of silent over there.
+					//
+					// ulActual is deliberately left alone: it is tested for == 1 below to
+					// pick the frequency-domain algorithm, and that test is about how many
+					// satellites are in view, not how many are being scheduled.
+					ULONG ulToSchedule = ulActual;
+					const ULONG culMaxToSchedule = CDBFPSConfig::Instance().MaxSatellites();
+
+					if ( ulToSchedule > culMaxToSchedule )
+					{
+						FILE* lpTrace = CDBFPSConfig::Instance().OpenTraceLog();
+						if ( lpTrace )
+						{
+							fprintf( lpTrace,
+								"Scheduling %lu of %lu satellites in view (MaxSatellites=%lu);"
+								" dropping the %lu lowest by plate elevation.\n",
+								culMaxToSchedule, ulActual, culMaxToSchedule,
+								ulActual - culMaxToSchedule );
+							fclose( lpTrace );
+						}
+
+						ulToSchedule = culMaxToSchedule;
+					}
+
+					for ( ULONG j = 0; j < ulToSchedule; j++ )
 					{
 						memset( &PassRecord, 0, sizeof(EMSDBFPASSRECORD2) );
 					
@@ -397,20 +461,9 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 							PassRecord.wProcessID = 2; // Perform Time Domain method
 						}
 
-						bPassOK = false;
-						// Check satellite elevation
-						if ( ( aAzEls[j].degSatElevation > c_dSatElevationMin )
-							  && ( aAzEls[j].degSatElevation < c_dSatElevationMax ) ) // TSI in-house DBF only (blockage)
-						{
-							if ( aAzEls[j].ulSatID < 200 )
-							{
-								if( aAzEls[j].degPlateElevation > c_dLEOMinPlateElevation ) bPassOK = true;
-							}
-							else if( aAzEls[j].ulSatID > 400 )
-							{
-							   if ( aAzEls[j].degPlateElevation > c_dMEOMinPlateElevation ) bPassOK = true;
-							}
-						}
+						// Check satellite elevation against the plate's configured window
+						// (the upper bound is TSI in-house DBF only -- blockage).
+						bPassOK = _IsSchedulable( aAzEls[j], plateCfg );
 
 						if ( bPassOK )
 						{
@@ -424,7 +477,8 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 							{
 								if ( (*pActiveSatVector)[s].ulSatId == aAzEls[j].ulSatID )
 								{
-									PassRecord.fDownFrequency = (EMSDBFFREQ)(*pActiveSatVector)[s].fFrequency;
+									// Config carries MHz as a double; the record carries whole Hz.
+									PassRecord.ulDownFrequencyHz = EMSDBF_HZ_FROM_MHZ( (*pActiveSatVector)[s].fFrequency );
 									PassRecord.wPolarization  = ( (*pActiveSatVector)[s].szPolarisation == "RHCP" ) ? 1 : 0;
 									break;
 								}
@@ -646,7 +700,7 @@ CEMSDBFSchedulerService::_Init()
 		hr = m_oDBFPassSchedCfg.ReadDBFConfigFromXML(szConfigFile);
 
 		{
-			FILE* lpT = fopen( CDBFPSConfig::Instance().TraceLogFile().c_str(), "at" );
+			FILE* lpT = CDBFPSConfig::Instance().OpenTraceLog();
 			if ( lpT )
 			{
 				fprintf( lpT, "_Init: PassScheduleFile=%s  ReadDBFConfigFromXML hr=0x%08X\n",

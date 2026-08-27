@@ -224,6 +224,31 @@ CEMSDBFPassScheduleCfg::ReadDBFConfigFromXML(const std::string szInFile)
 
 			odbfPlateCfg.fPlateMinElevation = (float)iter->plateminelevation(); 
 
+			// <plateminazimuth>/<platemaxazimuth> are optional. Absent means "no azimuth
+			// limit", which we express as the full circle so the check downstream needs
+			// no special case. Both are read independently, so a config may pin just one
+			// edge of the window.
+			odbfPlateCfg.fPlateMinAzimuth = iter->plateminazimuth().present()
+											? (float)iter->plateminazimuth().get() : 0.0f;
+
+			odbfPlateCfg.fPlateMaxAzimuth = iter->platemaxazimuth().present()
+											? (float)iter->platemaxazimuth().get() : 360.0f;
+
+			// Also optional, and defaulted to the values these thresholds carried while
+			// they were compile-time constants in EMSDBFPassScheduler.cpp, so a config
+			// that names none of them schedules exactly as before.
+			odbfPlateCfg.fSatMinElevation = iter->satminelevation().present()
+											? (float)iter->satminelevation().get() : 12.0f;
+
+			odbfPlateCfg.fSatMaxElevation = iter->satmaxelevation().present()
+											? (float)iter->satmaxelevation().get() : 85.0f;
+
+			odbfPlateCfg.fPlateMinElevationLEO = iter->plateminelevationleo().present()
+											? (float)iter->plateminelevationleo().get() : 12.0f;
+
+			odbfPlateCfg.fPlateMinElevationMEO = iter->plateminelevationmeo().present()
+											? (float)iter->plateminelevationmeo().get() : 12.0f;
+
 			odbfPlateCfg.fPlateMinSeparationAngle = (float)iter->plateminseparationangle();
 
 			odbfPlateCfg.plateLocation.degLatitude = iter->location().latitude(); 

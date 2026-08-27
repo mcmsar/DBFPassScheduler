@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ns2:plateconfig xmlns:ns2="urn:dbfplateconfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dbfplateconfig file:///D://TSi_DBF//trunk//EMSDBFPassScheduler_06_17_26//DBFPSConfig//dbfPlateConfig.xsd" version="v1">
+<ns2:plateconfig xmlns:ns2="urn:dbfplateconfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dbfplateconfig file:///C://Users//joshua.rehm//TSiDBFPassScheduler//DBFPSConfig//dbfPlateConfig.xsd" version="v1">
 	<dbfplates>
 		<dbfplate id = "1">
 			<platefaceazimuth> 199.0 </platefaceazimuth>

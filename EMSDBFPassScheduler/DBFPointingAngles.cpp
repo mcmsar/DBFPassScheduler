@@ -64,6 +64,10 @@ CDBFPointingAngles::CDBFPointingAngles() : m_ulChannels(0), m_ulSatellites(0),
 	m_bInitialized = FALSE;
 	m_bSun = false;
 	m_dDlFrequency = 0.0;
+
+	m_dPlateMinElevation = cdPlateMinElevationDefault;
+	m_dPlateMinAzimuth   = cdPlateMinAzimuthDefault;
+	m_dPlateMaxAzimuth   = cdPlateMaxAzimuthDefault;
 }
 
 CDBFPointingAngles::CDBFPointingAngles( const CDBFPointingAngles& x ) : m_ulChannels( x.m_ulChannels ),
@@ -73,6 +77,10 @@ CDBFPointingAngles::CDBFPointingAngles( const CDBFPointingAngles& x ) : m_ulChan
 	// Orbit object is not shared across copies; it will be created on demand
 	// via Initialize().
 	m_bInitialized = FALSE;
+
+	m_dPlateMinElevation = x.m_dPlateMinElevation;
+	m_dPlateMinAzimuth   = x.m_dPlateMinAzimuth;
+	m_dPlateMaxAzimuth   = x.m_dPlateMaxAzimuth;
 }
 
 CDBFPointingAngles::~CDBFPointingAngles( void )
@@ -108,6 +116,45 @@ CDBFPointingAngles::SetPlate( EMSDBFARRAY *aDBFplate )
 {
 	memset(&m_aDBFplate, 0, sizeof(EMSDBFARRAY));
 	memcpy( &m_aDBFplate, aDBFplate, sizeof(EMSDBFARRAY) );
+}
+//---------------------------------------------------------------------------
+
+void
+CDBFPointingAngles::SetPlateLimits( double dMinElevation, double dMinAzimuth, double dMaxAzimuth )
+{
+	m_dPlateMinElevation = dMinElevation;
+	m_dPlateMinAzimuth   = dMinAzimuth;
+	m_dPlateMaxAzimuth   = dMaxAzimuth;
+}
+//---------------------------------------------------------------------------
+
+// True when a satellite at dSatAzimuth (degrees north, site frame) falls inside the
+// plate's azimuth acceptance window. The window is expressed as absolute azimuths
+// rather than an offset from the plate face, so a plate facing 180 with 90 degrees of
+// coverage either side is configured as 90..270.
+bool
+CDBFPointingAngles::_InPlateAzimuthWindow( const double dSatAzimuth ) const
+{
+	// A window covering the whole circle accepts everything. Checked before the
+	// wrap handling below, because the default 0..360 normalises to 0..0 and would
+	// otherwise be read as an empty window.
+	if ( ( m_dPlateMaxAzimuth - m_dPlateMinAzimuth ) >= 360.0 )
+	{
+		return true;
+	}
+
+	double dAz  = fmod( fmod( dSatAzimuth, 360.0 ) + 360.0, 360.0 );
+	double dMin = fmod( fmod( m_dPlateMinAzimuth, 360.0 ) + 360.0, 360.0 );
+	double dMax = fmod( fmod( m_dPlateMaxAzimuth, 360.0 ) + 360.0, 360.0 );
+
+	if ( dMin <= dMax )
+	{
+		// Ordinary window, e.g. 90..270 for a plate facing south.
+		return ( dAz >= dMin ) && ( dAz <= dMax );
+	}
+
+	// Window wraps through north, e.g. 280..100 for a plate facing 010.
+	return ( dAz >= dMin ) || ( dAz <= dMax );
 }
 //---------------------------------------------------------------------------
 
@@ -177,7 +224,7 @@ CDBFPointingAngles::_GetValidSatellites( std::vector<EMSDBFPASATCFG> &ulVectAllS
 	
 	ULONG ulSatVectSize = ulVectAllSats.size();
 
-	FILE* lpTraceFILE =  fopen(CDBFPSConfig::Instance().TraceLogFile().c_str(),"at");
+	FILE* lpTraceFILE =  CDBFPSConfig::Instance().OpenTraceLog();
 
 
 	if( ( ulSatVectSize> 0) && m_lpOrbit )
@@ -718,7 +765,6 @@ CDBFPointingAngles::GetPlateAZELs( EMSDBFAZEL* aAzEls, ULONG* pulActual )
 	
 		double dDBFazimuth;
 		double dDBFelevation;
-		double dPlateMinElevation;
 
 		for ( ULONG l = 0; l < ulRecords; l++ )
 		{
@@ -728,15 +774,14 @@ CDBFPointingAngles::GetPlateAZELs( EMSDBFAZEL* aAzEls, ULONG* pulActual )
 			//hr = _Satellite2PlateRotation_V2( aAzEls[l].degSatAzimuth, aAzEls[l].degSatElevation,
 			//								&dDBFazimuth, &dDBFelevation );
 
-			if (aAzEls[l].ulSatID > 400) 
-			{
-					dPlateMinElevation = cdPlateMinElevationMEO;
-			}
-			else
-			{
-					dPlateMinElevation = cdPlateMinElevationLEO;
-			}
-			if ( (EMS_OK == hr) && ( dDBFelevation > dPlateMinElevation ) )
+			// dDBFelevation is the angle off the plate boresight, so on its own it only
+			// describes a cone about the face normal. With the face tilted up, that cone
+			// reaches well past the azimuths the antenna can actually see, so the
+			// configured azimuth window is applied as a separate constraint on the
+			// satellite's true azimuth.
+			if ( (EMS_OK == hr)
+				&& ( dDBFelevation > m_dPlateMinElevation )
+				&& _InPlateAzimuthWindow( aAzEls[l].degSatAzimuth ) )
 			{
 				
 				aAzEls[*pulActual] = aAzEls[l];

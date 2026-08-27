@@ -1,66 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ns2:config xmlns:ns2="urn:dbfconfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dbfconfig file:///D://TSi_DBF//trunk//EMSDBFPassScheduler_06_17_26//DBFPSConfig//dbfConfig.xsd" version="v1">
+<ns2:config xmlns:ns2="urn:dbfconfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:dbfconfig file:///C://Users//joshua.rehm//TSiDBFPassScheduler//DBFPSConfig//dbfConfig.xsd" version="v1">
 	<dbfpassschedule>
 		<dbfpassschedulecfg>
 			<meolutid>3191</meolutid>
 			<satellites>
-				<constellation type = "LEO" frequency = "1533.8" polarisation="RHCP">
+				<constellation type = "LEO" frequency = "1533.8" polarisation="LHCP">
 					<satellite id="7" priority = "10"/>
 					<satellite id="10" priority = "10"/>
 					<satellite id="11" priority = "10"/>
 					<satellite id="12" priority = "10"/>
-					<satellite id="13" priority = "1000"/>
+					<satellite id="13" priority = "10"/>
 					<satellite id="114" priority = "10"/>
-					<satellite id="115" priority = "1000"/>
-					<satellite id="116" priority = "1000"/>
 				</constellation>
-				<constellation type = "GALILEO" frequency = "1533.401487" polarisation="RHCP">
+				<constellation type = "GALILEO" frequency = "1533.4" polarisation="RHCP">
 					<satellite id="401" priority = "20"/>
 					<satellite id="402" priority = "20"/>
 					<satellite id="403" priority = "20"/>
 					<satellite id="404" priority = "20"/>
 					<satellite id="405" priority = "20"/>
-					<satellite id="406" priority = "20"/>
 					<satellite id="407" priority = "20"/>
 					<satellite id="408" priority = "25"/>
 					<satellite id="409" priority = "25"/>
-					<satellite id="410" priority = "25"/>
-					<satellite id="413" priority = "25"/>
 					<satellite id="414" priority = "25"/>
-					<satellite id="415" priority = "25"/>
-					<satellite id="416" priority = "25"/>
 					<satellite id="418" priority = "20"/>
 					<satellite id="419" priority = "20"/>
 					<!--satellite id="420" priority = "20"/-->
 					<satellite id="421" priority = "25"/>
 					<!--satellite id="422" priority = "25"/-->
-					<satellite id="423" priority = "25"/>
-					<!--<satellite id="424" priority = "25"/>/-->
+					<satellite id="424" priority = "25"/>
 					<satellite id="425" priority = "25"/>
 					<satellite id="426" priority = "25"/>
 					<satellite id="427" priority = "25"/>
-					<satellite id="429" priority = "25"/>
 					<satellite id="430" priority = "25"/>
 					<satellite id="431" priority = "25"/>
-					<satellite id="432" priority = "25"/>
 					<satellite id="433" priority = "25"/>
-					<satellite id="434" priority = "25"/>
 					<satellite id="436" priority = "25"/>
 				</constellation>
-				<constellation type = "BEIDOU" frequency = "1533.5102826" polarisation="LHCP">
-					<satellite id="632" priority = "25"/>
-					<satellite id="633" priority = "25"/>
-					<satellite id="638" priority = "25"/>
-					<satellite id="639" priority = "25"/>
-					<satellite id="640" priority = "25"/>
-					<satellite id="631" priority = "25"/>
+				<constellation type = "BEIDOU" frequency = "1544.21" polarisation="LHCP">
+					<satellite id="632" priority = "10"/>
+					<satellite id="633" priority = "10"/>
+					<satellite id="640" priority = "10"/>
+					<satellite id="643" priority = "25"/>
+					<satellite id="644" priority = "25"/>
+					<satellite id="645" priority = "25"/>
+					<satellite id="646" priority = "25"/>
 				</constellation>				
 			</satellites>
 		</dbfpassschedulecfg>
 		<dbfplates>
 			<dbfplate id = "1">
-				<plateconfigfile>D:\\TSi_DBF\\trunk\\EMSDBFPassScheduler_06_17_26\\DBFPSConfig\\DBFplate_01.xml</plateconfigfile>
-				<plateminelevation> 5.0 </plateminelevation>
+				<plateconfigfile>C:\\Users\\joshua.rehm\\TSiDBFPassScheduler\\DBFPSConfig\\DBFplate_01.xml</plateconfigfile>
+				<plateminelevation> 12.0 </plateminelevation>
+				<!-- Azimuth acceptance window, degrees north. 90..270 gives 90 degrees either
+				     side of a plate face pointing due south. Omit both to disable azimuth
+				     gating; min > max is read as a window wrapping through north. -->
+				<plateminazimuth> 90.0 </plateminazimuth>
+				<platemaxazimuth> 270.0 </platemaxazimuth>
+				<!-- Thresholds a satellite must clear to actually be scheduled, as opposed to
+				     plateminelevation above, which only decides what enters the pipeline.
+				     satmin/satmaxelevation bound elevation above the local horizon, the upper
+				     one being a site blockage limit. The plateminelevation* pair are floors on
+				     the angle off the plate boresight, applied to LEO (satellite ids below 200)
+				     and MEO (ids above 400) separately. All four are optional. -->
+				<satminelevation> 12.0 </satminelevation>
+				<satmaxelevation> 85.0 </satmaxelevation>
+				<plateminelevationleo> 12.0 </plateminelevationleo>
+				<plateminelevationmeo> 12.0 </plateminelevationmeo>
 				<plateminseparationangle> 2.0 </plateminseparationangle>
 				<location>
 					<latitude>38.948341</latitude>
@@ -69,12 +74,17 @@
 				</location>
 				<combiners>
 					<combiner id = "2">
-						<constellation>GALILEO</constellation>
-						<ipaddress>\\1.1.1.207\C$\HGT\DBFPassData_Test</ipaddress>
+						<!-- Primary,Fallback: tracks BEIDOU; if no BEIDOU satellite is in view at a
+						     given time step, falls back to the fallback constellation named here.
+						     Using LEO as the fallback for now since it already has real satellite
+						     entries defined above; swap to GLONASS once its satellite ids/
+						     frequency/polarisation are added under <satellites>. -->
+						<constellation>BEIDOU,LEO</constellation>
+						<ipaddress>\\127.0.0.1\C$\Users\joshua.rehm\TSiDBFPassScheduler\Output</ipaddress>
 					</combiner>
 					<combiner id = "1">
-						<constellation>LEO</constellation>
-						<ipaddress>\\1.1.1.235\C$\HGT\DBFPassData_Test</ipaddress>
+						<constellation>GALILEO</constellation>
+						<ipaddress>\\127.0.0.1\C$\Users\joshua.rehm\TSiDBFPassScheduler\Output</ipaddress>
 					</combiner>
 				</combiners>
 			</dbfplate>

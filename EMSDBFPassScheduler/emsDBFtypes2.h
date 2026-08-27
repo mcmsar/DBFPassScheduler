@@ -41,6 +41,25 @@
 
 #define DBF_MAX_CHANNELS    (32)	// maximum number of input channels (based upon ADC board capabilities)
 #define DBF_MAX_ELEMENTS    (31)	// maximum number of antenna elements
+// Compile-time CAPACITY for every DBF_MAX_SATELLITES-dimensioned array in the
+// scheduler: EMSDBFPASSRECORDS2::rec below, and CDBFNullPointing's steering
+// matrices in DBFNullPointing.h.
+//
+// This is the ONLY definition -- do not re-#define it in another header. Two
+// definitions give the struct declarations one value and the loops that walk them
+// another, which is silent until something reads off the end of an array.
+//
+// Kept in step with DBF_MAX_SATELLITES in the collector's emsDBFtypes.h. The
+// collector stores at most this many pass records per second, so publishing more
+// than this just means the extras are dropped on the far side.
+//
+// It does NOT affect the TSIDBFPass-<hour>.bin wire format: records are written one
+// EMSDBFPASSRECORD2 at a time (DBFDataMgr2.cpp), never as an EMSDBFPASSRECORDS2
+// block, and EMSDBFPASSRECORD2 itself contains no arrays dimensioned by this.
+//
+// Because it dimensions fixed arrays this cannot be read from XML. The RUNTIME
+// count is CDBFPSConfig::MaxSatellites(), settable via <MaxSatellites> in
+// DBFPSConfig.xml and clamped to this capacity.
 #define DBF_MAX_SATELLITES  (5)		// maximum number of DBF tracked satellites per face
 
 typedef struct tagEMSDBFAZEL
@@ -124,22 +143,36 @@ typedef struct _tagREFERENCEBEACONS
 
 typedef struct _tagEMSDBFPASSRECORDS __RPC_FAR *LPEMSDBFPASSRECORDS;
 
-// Wire-format precision for EMSDBFPASSRECORD2::fDownFrequency. EMSSPServer.dll
-// (the downstream Signal Conditioner) expects this field as a 4-byte float --
-// widening it to double changes the record's byte layout and crashes that
-// process (STATUS_STACK_BUFFER_OVERRUN, confirmed 2026-07-30). Only flip this
-// to 1 once every consumer of the wire format -- scheduler, collector, AND the
-// SP Server -- has been rebuilt to agree on the wider layout. This must be
-// defined identically here and in the collector's emsDBFtypes2.h.
-#ifndef EMSDBF_FREQUENCY_DOUBLE
-#define EMSDBF_FREQUENCY_DOUBLE 0
-#endif
+// Downlink frequency wire format: whole Hz in a 32-bit unsigned, not MHz in a
+// float. The only thing that consumes this value is the SG384 local-oscillator
+// tune command, which is formatted "%.6f" in MHz -- i.e. quantised to 1 Hz --
+// so integer Hz is exactly lossless for it. A float at L-band magnitudes
+// carries only ~122 Hz of resolution, so the last three of those six decimals
+// were noise.
+//
+// Integer Hz was chosen over widening the field to double deliberately. A
+// double grows EMSDBFPASSRECORD2 from 320 to 328 bytes, and TSIDBFPass-<hour>.bin
+// is a bare fwrite() dump with no header, version or record delimiter -- it is
+// parsed at whatever stride the reader happened to be compiled with. One
+// scheduler feeds several collector builds (GALILEO and BEIDOU combiners; see
+// DBFPSConfig/DBFPassSchedule.xml), and the hour-indexed filenames are reused
+// daily, so a size change silently misaligns every record in any collector not
+// rebuilt in lockstep -- that is what put garbage ulSatID/ulLutID on the wire
+// to the SP server on 2026-07-30. (The SP server itself never sees this struct;
+// it receives a CEMSWaveEx RIFF blob. The misalignment, not the field width,
+// was the fault.) Keeping the record at 320 bytes removes that failure mode
+// instead of trying to detect it after the fact.
+//
+// Range ceiling is ULONG_MAX Hz (~4.29 GHz), comfortable for L-band downlinks.
+// This block must stay identical in all three copies of emsDBFtypes2.h
+// (DBF_07_22_GAL, DBF_07_22_BDS, TSiDBFPassScheduler).
 
-#if EMSDBF_FREQUENCY_DOUBLE
+// Frequency type for in-memory use and APIs, in MHz. Only the on-disk record
+// uses integer Hz.
 typedef double EMSDBFFREQ;
-#else
-typedef float EMSDBFFREQ;
-#endif
+
+#define EMSDBF_HZ_FROM_MHZ( mhz ) ( (ULONG)( (mhz) * 1.0e6 + 0.5 ) )
+#define EMSDBF_MHZ_FROM_HZ( hz )  ( (EMSDBFFREQ)(hz) * 1.0e-6 )
 
 typedef struct _tagEMSDBFPASSRECORD2
 {
@@ -150,7 +183,7 @@ typedef struct _tagEMSDBFPASSRECORD2
 	WORD  wProcessID;		// Process Identifier: 0 to 5  (see process definition).
 	WORD  wPlateID;			// Plate Identifier number, defining an array plate ( up to 8 plates)
 	WORD  wAntennaID;		// Antenna Identifier number, defining a beam pattern ( up to 4 beams allowed)
-	EMSDBFFREQ fDownFrequency;	// Constellation downlink frequency (same unit as configured in DBFPassScheduler.xml)
+	ULONG ulDownFrequencyHz;// Constellation downlink frequency (whole Hz -- see note above)
 	WORD  wPolarization;	// Signal polarization: 0 = LHCP, 1 = RHCP
 	float fAzimuth;			// Site azimuth pointing angle to satellite (degN)
 	float fElevation;		// Site elevation pointing angle to satellite (deg)

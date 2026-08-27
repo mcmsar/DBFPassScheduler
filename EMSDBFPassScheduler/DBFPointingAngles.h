@@ -81,14 +81,24 @@ interface IEMSSatelliteInfo12;
 const ULONG culMaxSats = 128;
 const ULONG culMaxChannels = 63;
 const double cdSiteMinElevation  = 5.0;  // minimum elevation angle at site
-//const double cdPlateMinElevation = 30.0; // minimum elevation angle at plate
-const double cdPlateMinElevationMEO = 5.0; // minimum elevation angle at plate
-const double cdPlateMinElevationLEO = 5.0; // minimum elevation angle at plate for LEO
+
+// Fallbacks for the plate acceptance window, used only until SetPlateLimits() is
+// called with the values from <dbfplate> in DBFPassSchedule.xml. There used to be
+// separate MEO and LEO plate minimums here, but both were 5.0 and the XML carries a
+// single <plateminelevation>, so they collapse into one default.
+const double cdPlateMinElevationDefault = 5.0; // minimum elevation angle at plate
+const double cdPlateMinAzimuthDefault   = 0.0;   // full circle, i.e. no azimuth gating
+const double cdPlateMaxAzimuthDefault   = 360.0;
 
 
 #define MAX_PATTERNS (5)
 #define DBF_MAX_CHANNELS    (32)		// maximum number of input channels (based upon ADC board capabilities)
-#define DBF_MAX_SATELLITES  (5)			// maximum number of DBF tracked satellites per face
+
+// DBF_MAX_SATELLITES comes from emsDBFtypes2.h (included above), which is the single
+// source of truth for it. This header used to re-#define it with the same value, so
+// it was benign -- but the moment the two diverged, the structs in emsDBFtypes2.h
+// would be sized with one value while everything below here walked them with the
+// other. Do not reintroduce a definition here.
 
 class CDBFPointingAngles
 {
@@ -118,6 +128,11 @@ public:
 	int GetConstellationType( ULONG ulSatID );
 
 	void SetPlate( EMSDBFARRAY* aDBFplate );
+
+	// Acceptance window a satellite must fall inside to be handed on by
+	// GetPlateAZELs(), taken from <plateminelevation>, <plateminazimuth> and
+	// <platemaxazimuth> for this plate in DBFPassSchedule.xml.
+	void SetPlateLimits( double dMinElevation, double dMinAzimuth, double dMaxAzimuth );
 
 	EMS_RESULT SetBiasOffset( const float* biasOffset);
 
@@ -160,6 +175,8 @@ private:
 	EMS_RESULT _Satellite2PlateRotation_V2( const double dSatAzimuth, double dSatElevation,
 										double *dDBFazimuth, double *dDBFelevation );
 
+	bool _InPlateAzimuthWindow( const double dSatAzimuth ) const;
+
 
 	void _Reset( );
 	
@@ -187,6 +204,10 @@ private: // data
 	EMSLOCATION				m_locnAntenna;
 
 	EMSDBFARRAY				m_aDBFplate;
+
+	double					m_dPlateMinElevation;
+	double					m_dPlateMinAzimuth;
+	double					m_dPlateMaxAzimuth;
 
 	EMSVECTORD              m_vRotationRow1;
 	EMSVECTORD              m_vRotationRow2;

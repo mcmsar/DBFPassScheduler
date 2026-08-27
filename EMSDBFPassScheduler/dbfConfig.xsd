@@ -56,6 +56,25 @@
 	<xs:all minOccurs="1">
 		<xs:element name="plateconfigfile" type="xs:string"/>
 		<xs:element name="plateminelevation" type="xs:decimal"/>
+		<!-- Azimuth acceptance window at the plate, in degrees north. Optional: when
+		     either limit is omitted the window spans the full circle, i.e. no azimuth
+		     gating, which is how the scheduler behaved before these were added. A
+		     window that wraps through north (min > max, e.g. 280..100) is honoured. -->
+		<xs:element name="plateminazimuth" type="xs:decimal" minOccurs="0"/>
+		<xs:element name="platemaxazimuth" type="xs:decimal" minOccurs="0"/>
+		<!-- Elevation thresholds a satellite must clear to actually be scheduled, as
+		     opposed to <plateminelevation> above, which only decides what enters the
+		     pipeline. All optional; omitting one keeps the value that used to be
+		     compiled into EMSDBFPassScheduler.cpp.
+		     satminelevation/satmaxelevation bound the satellite's elevation above the
+		     local horizon (the upper bound is a site blockage limit). The two
+		     plateminelevation* values are floors on the angle off the plate boresight,
+		     applied per constellation class: LEO for satellite ids below 200, MEO for
+		     ids above 400. -->
+		<xs:element name="satminelevation" type="xs:decimal" minOccurs="0"/>
+		<xs:element name="satmaxelevation" type="xs:decimal" minOccurs="0"/>
+		<xs:element name="plateminelevationleo" type="xs:decimal" minOccurs="0"/>
+		<xs:element name="plateminelevationmeo" type="xs:decimal" minOccurs="0"/>
 		<xs:element name="plateminseparationangle" type="xs:decimal"/>
 		<xs:element  name="location" type="dbfconfig:location"/>
 		<xs:element  name="combiners" type="dbfconfig:combiners"/>
