@@ -478,16 +478,26 @@ CDBFPointingAngles::_Satellite2PlateRotation( const double dSatAzimuth, double d
 		double dPlateElevation = m_aDBFplate.fPlateFaceElevation;
 		double dPlateRotation  = m_aDBFplate.fPlateFaceRotation;
 
+		// <platefaceelevation> is the tilt of the face away from the ZENITH, not an
+		// elevation above the horizon: 0 points the boresight straight up, 90 lays it
+		// flat against the horizon. This is what makes a plate configured at azimuth 0
+		// and elevation 0 report each satellite's own azimuth and elevation unchanged,
+		// which is the natural identity check for the transform. 45 degrees means the
+		// same thing under either reading, which is why every tilted system agreed and
+		// the difference only showed up on a plate configured at 0.
+		double dBoresightElevation = 90.0 - dPlateElevation;
+
 		// Compute unit vector pointing vectors
 		vSat   = _Convert2UnitVector(dSatAzimuth, dSatElevation);
-		vPlate = _Convert2UnitVector(dPlateAzimuth, dPlateElevation);
+		vPlate = _Convert2UnitVector(dPlateAzimuth, dBoresightElevation);
 
 		// Compute satellite elevation in DBF plate coordinates
 		dCangle = CEMSVector::DotProduct(vSat, vPlate);
 		dEl = asin(dCangle) * c_dRadToDeg;
 
-		// Compute Axes of Plate surface
-		if (abs(90 - dPlateElevation) > 0.01)
+		// Compute Axes of Plate surface. The degenerate case is a boresight straight up
+		// the Z axis, which is now <platefaceelevation> 0 rather than 90.
+		if (abs(dPlateElevation) > 0.01)
 		{
 			// Cross products
 
@@ -503,20 +513,42 @@ CDBFPointingAngles::_Satellite2PlateRotation( const double dSatAzimuth, double d
 			v2.dZ = v1.dX * vPlate.dY - v1.dY * vPlate.dX;
 			v2 = CEMSVector::Normalize(v2);
 
-			// Projection of satellite vector onto the plate surface
-			v3.dX = vSat.dX * (v1.dX + v2.dX);
-			v3.dY = vSat.dY * (v1.dY + v2.dY);
-			v3.dZ = vSat.dZ * (v1.dZ + v2.dZ);
-			v3 = CEMSVector::Normalize(v3);
+			// Projection of the satellite vector onto the plate surface, as its
+			// components along the two in-plane axes. This used to multiply vSat
+			// element-wise by (v1 + v2), which is not a projection onto anything: it
+			// mixes the two axes together and leaves the result in world coordinates,
+			// so the atan2 below was reading axes that were never separated. With the
+			// face tilted the answer was merely wrong; with a face at zero elevation
+			// v1 + v2 is axis aligned, v3.dX collapses to exactly zero for every
+			// satellite, and the azimuth can only come out as 90 or 270.
+			v3.dX = CEMSVector::DotProduct( vSat, v1 );
+			v3.dY = CEMSVector::DotProduct( vSat, v2 );
+			v3.dZ = 0.0;
 
-			dAz = atan2(v3.dY, v3.dX) * c_dRadToDeg;
+			// Measured from v2 (the in-plane "up" axis) toward v1 (transverse), which
+			// is what makes this agree with the face-at-zenith case below: as the face
+			// tilts up to 90 degrees v2 approaches the plate azimuth direction and this
+			// converges on dSatAzimuth - dPlateAzimuth. Taking the arguments the other
+			// way round measures from v1 instead, which is the same angle reflected and
+			// offset by 90 degrees, and left the two branches disagreeing across the
+			// boundary.
+			dAz = atan2(v3.dX, v3.dY) * c_dRadToDeg;
 		}
 		else
 		{
-			dAz = dSatAzimuth;
+			// Face points at the zenith, where v1 above degenerates: vPlate is (0,0,1),
+			// so the vector being normalised is zero to within rounding. Use the limit
+			// of the branch above instead. The plate azimuth still counts here -- it
+			// orients the face about the vertical -- so it is subtracted rather than
+			// ignored, which together with dEl below makes this the identity transform
+			// when the plate is left at azimuth 0.
+			dAz = dSatAzimuth - dPlateAzimuth;
 		}
 
-		dAz = dAz + dPlateRotation;
+		// Normalise into [0,360) rather than nudging once by 360: dPlateRotation can
+		// push the sum past either end, and the single correction below could leave an
+		// out-of-range azimuth when it did.
+		dAz = fmod( dAz + dPlateRotation, 360.0 );
 		if (dAz < 0.0 ) dAz = dAz + 360.0;
 
 		*dDBFazimuth   = dAz;

@@ -112,7 +112,13 @@ typedef struct _tagEMSDBFARRAY
 	WORD  wPlatePolarization;	// Plate Polarization Flag ( Polarization = 0 for LHCP, Polarization = 1 for RHCP )
 	WORD  wCellNumber;			// Number of active cells
 	float fPlateFaceAzimuth;	// Antenna Plate Face azimuth angle (degN)
-	float fPlateFaceElevation;	// Antenna Plate Face elevation angle (deg)
+	float fPlateFaceElevation;	// Antenna Plate Face tilt away from the zenith (deg):
+								// 0 = boresight straight up, 90 = boresight on the
+								// horizon. NOT an elevation above the horizon. At 0 the
+								// plate frame is the site frame, so fPlateAzimuth and
+								// fPlateElevation come back equal to fAzimuth and
+								// fElevation. 45 reads the same either way, which is why
+								// only a plate configured at 0 exposes the difference.
 	float fPlateFaceRotation;	// Antenna Plate Face rotation angle of face major axis relative to face perpendicular and up direction (deg)
 	WORD  wFixedPointNumber;    // number of fixed points (zero means don't use fixed points).
 	

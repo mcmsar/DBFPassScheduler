@@ -68,6 +68,12 @@ public:
 
 	BOOL CheckRefBeacon( EMSDBFPASSRECORD2 *PassRecord );
 
+	// Puts the reference-beacon fields back into the "no beacon this second" state:
+	// ID and message filled with '0', location and transmit frequency zeroed. That
+	// is the representation CheckRefBeacon leaves when no beacon is due, so a record
+	// cleared here is indistinguishable from one that never had a beacon.
+	static void ClearRefBeacon( EMSDBFPASSRECORD2 *PassRecord );
+
 	void Reset( );
 
 

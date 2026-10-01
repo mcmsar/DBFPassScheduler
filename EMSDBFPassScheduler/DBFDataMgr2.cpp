@@ -462,6 +462,33 @@ CEMSDBFDataMgr::ReadRefBeacons( )
 	return hr;
 }
 
+// These two fields are fixed-width character arrays written straight to the wire,
+// not C strings, so "empty" is a full array of '0' rather than a terminator.
+//
+// This used to be done with memcpy( &cBeaconID[i], "0", 8 ) in a loop over every
+// index, which wrote eight bytes at each offset and so ran seven bytes past the end
+// of the array on its last iteration. It also read eight bytes from a two-byte
+// string literal. The damage stayed small by luck rather than design: the visible
+// characters came out right, because each iteration wrote '0' at its own offset
+// before the next overwrote the tail, and of the seven bytes past cBeaconMess five
+// land in struct padding, leaving two in the low-order mantissa bits of
+// RefLocation.degLatitude. Which of those bytes were non-zero depended on whatever
+// the linker happened to place after the literal, so the whole thing was undefined
+// behaviour that merely presented as harmless in this build.
+void
+CEMSDBFDataMgr::ClearRefBeacon( EMSDBFPASSRECORD2 *PassRecord )
+{
+	if ( !PassRecord ) return;
+
+	memset( PassRecord->cBeaconID,   '0', sizeof(PassRecord->cBeaconID) );
+	memset( PassRecord->cBeaconMess, '0', sizeof(PassRecord->cBeaconMess) );
+
+	memset( &PassRecord->RefLocation, 0, sizeof(PassRecord->RefLocation) );
+	PassRecord->fRefTxFrequency = 0.0f;
+}
+
+//---------------------------------------------------------------------------
+
 BOOL
 CEMSDBFDataMgr::CheckRefBeacon( EMSDBFPASSRECORD2 *PassRecord )
 {
@@ -478,15 +505,8 @@ CEMSDBFDataMgr::CheckRefBeacon( EMSDBFPASSRECORD2 *PassRecord )
 		// Assume each beacon starts at the exact second mark requiring an offset of 1 second 
 		//iDaySecond += 1;
 
-		for ( int i = 0; i < 15; i++ )
-		{
-			memcpy( &PassRecord->cBeaconID[i], "0", 8 );
-		}
-		for ( int i = 0; i < 36; i++ )
-		{
-			memcpy( &PassRecord->cBeaconMess[i], "0", 8 );
-		}
-		
+		ClearRefBeacon( PassRecord );
+
 		//BOOL bOK = false;
 		for ( int i = 0; i < m_RefCount; i++ )
 		{

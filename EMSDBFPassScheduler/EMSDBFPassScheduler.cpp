@@ -248,6 +248,24 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 	{
 		if ( nPlate >= vectPlateCfg.size() ) continue;
 
+		// No plate geometry was loaded for this plate - its file was missing or
+		// unreadable in both formats (ReadDBFPlateConfigFromXML logs which and why).
+		// SetPlate() below copies m_vectPlates[nPlate] wholesale, so indexing an
+		// empty vector here was an access violation in VCRUNTIME140 on every start.
+		if ( nPlate >= m_vectPlates.size() )
+		{
+			FILE* lpTrace = CDBFPSConfig::Instance().OpenTraceLog();
+			if ( lpTrace )
+			{
+				fprintf( lpTrace,
+					"*** Plate %lu: no plate configuration loaded from '%s' - skipping pass schedule "
+					"generation for this plate (see the DBF PLATE lines above) ***\n",
+					nPlate + 1, vectPlateCfg[nPlate].szPlateCfgFile.c_str() );
+				fclose( lpTrace );
+			}
+			continue;
+		}
+
 		const EMSDBFPLATECFG& plateCfg = vectPlateCfg[nPlate];
 
 		ULONG nCombBoardCount  = m_vectDbfCombiner.size();
@@ -539,6 +557,19 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 						
 									PassRecord.fFOA = PassRecord.fRefTxFrequency + fDownDoppler + fUpDoppler;
 
+								}
+								else
+								{
+									// Beacon is below this satellite's horizon, so there is no
+									// FOA or TOA to compute. CheckRefBeacon has already stamped
+									// the beacon id, message, location and transmit frequency
+									// into the record, and leaving them there publishes a
+									// beacon with fFOA and fTOA still at zero -- indistinguishable
+									// downstream from a measured zero. Put the record back into
+									// the "no beacon this second" state instead. fBeaconElevation
+									// is deliberately left as computed: it is what says why the
+									// beacon was dropped.
+									CEMSDBFDataMgr::ClearRefBeacon( &PassRecord );
 								}
 							}
 							hr = m_oDMgr.WritePassSchedule( PassRecord, szCombinerIP, bTestSun, szActiveConstellation );
