@@ -78,17 +78,19 @@ class CEMSDBFSchedulerService : public CEMSService
 
 		ULONG				m_ulLutId;
 		ULONG				m_ulPassId;
-		WORD				m_wPlateId;
 		ULONG				m_ulPlates;
+		// One entry per <dbfplate> in DBFPassSchedule.xml, in the same order, so
+		// m_vectPlates[n] is always the geometry for vectDbfPlate[n]. A plate whose
+		// file could not be loaded keeps a zeroed slot with m_vectPlateLoaded[n]
+		// false, rather than letting the next plate's geometry shift into its index.
+		// Combiners, site location and plate id are read per plate from vectDbfPlate.
 		std::vector<EMSDBFARRAY>	m_vectPlates;
-		std::vector<EMSDBFCOMBINERCFG> m_vectDbfCombiner;
+		std::vector<bool>			m_vectPlateLoaded;
 
 		std::vector<EMSDBFPASATCFG> m_vectLeoSats;
 		std::vector<EMSDBFPASATCFG> m_vectGalileoSats;
 		std::vector<EMSDBFPASATCFG> m_vectBeidouSats;
 		std::vector<EMSDBFPASATCFG> m_vectGlonassSats;
-
-		EMSDBFPASITELOCATIONCFG	m_siteLocation;
 
 		CEMSDBFPassScheduleCfg	m_oDBFPassSchedCfg;
 		CEMSDBFDataMgr			m_oDMgr;

@@ -16,13 +16,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
-    <None Include="DBFPSConfig.xml" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BuildInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CSVReader.h">
@@ -58,11 +63,11 @@
     <ClInclude Include="OrbitCalc\PREDICT.H">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DBFPSConfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="EMSDBFPassScheduler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -76,6 +81,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DBFPointingAngles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SIGPROC.CPP">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Common\EMSTIME.CPP">
@@ -106,6 +114,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Common\Eservice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\LogHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Common\LogRegistrySettings.cpp">
@@ -217,27 +228,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="OrbitCalc\TOGS.CPP">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Common\LangConstants.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Common\LangResources.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Common\EMSMUTEX.CPP">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="LogHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DBFPSConfig.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="EMSMatrixOps.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Common\SIGPROC.CPP">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

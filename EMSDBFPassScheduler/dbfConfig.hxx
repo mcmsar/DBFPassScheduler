@@ -804,6 +804,78 @@ namespace dbfconfig
     void
     plateminelevationmeo (const plateminelevationmeo_optional& x);
 
+    // satminelevationleo
+    // 
+    typedef ::xml_schema::decimal satminelevationleo_type;
+    typedef ::xsd::cxx::tree::optional< satminelevationleo_type > satminelevationleo_optional;
+    typedef ::xsd::cxx::tree::traits< satminelevationleo_type, char, ::xsd::cxx::tree::schema_type::decimal > satminelevationleo_traits;
+
+    const satminelevationleo_optional&
+    satminelevationleo () const;
+
+    satminelevationleo_optional&
+    satminelevationleo ();
+
+    void
+    satminelevationleo (const satminelevationleo_type& x);
+
+    void
+    satminelevationleo (const satminelevationleo_optional& x);
+
+    // satmaxelevationleo
+    // 
+    typedef ::xml_schema::decimal satmaxelevationleo_type;
+    typedef ::xsd::cxx::tree::optional< satmaxelevationleo_type > satmaxelevationleo_optional;
+    typedef ::xsd::cxx::tree::traits< satmaxelevationleo_type, char, ::xsd::cxx::tree::schema_type::decimal > satmaxelevationleo_traits;
+
+    const satmaxelevationleo_optional&
+    satmaxelevationleo () const;
+
+    satmaxelevationleo_optional&
+    satmaxelevationleo ();
+
+    void
+    satmaxelevationleo (const satmaxelevationleo_type& x);
+
+    void
+    satmaxelevationleo (const satmaxelevationleo_optional& x);
+
+    // satminelevationmeo
+    // 
+    typedef ::xml_schema::decimal satminelevationmeo_type;
+    typedef ::xsd::cxx::tree::optional< satminelevationmeo_type > satminelevationmeo_optional;
+    typedef ::xsd::cxx::tree::traits< satminelevationmeo_type, char, ::xsd::cxx::tree::schema_type::decimal > satminelevationmeo_traits;
+
+    const satminelevationmeo_optional&
+    satminelevationmeo () const;
+
+    satminelevationmeo_optional&
+    satminelevationmeo ();
+
+    void
+    satminelevationmeo (const satminelevationmeo_type& x);
+
+    void
+    satminelevationmeo (const satminelevationmeo_optional& x);
+
+    // satmaxelevationmeo
+    // 
+    typedef ::xml_schema::decimal satmaxelevationmeo_type;
+    typedef ::xsd::cxx::tree::optional< satmaxelevationmeo_type > satmaxelevationmeo_optional;
+    typedef ::xsd::cxx::tree::traits< satmaxelevationmeo_type, char, ::xsd::cxx::tree::schema_type::decimal > satmaxelevationmeo_traits;
+
+    const satmaxelevationmeo_optional&
+    satmaxelevationmeo () const;
+
+    satmaxelevationmeo_optional&
+    satmaxelevationmeo ();
+
+    void
+    satmaxelevationmeo (const satmaxelevationmeo_type& x);
+
+    void
+    satmaxelevationmeo (const satmaxelevationmeo_optional& x);
+
     // plateminseparationangle
     // 
     typedef ::xml_schema::decimal plateminseparationangle_type;
@@ -916,6 +988,10 @@ namespace dbfconfig
     satmaxelevation_optional satmaxelevation_;
     plateminelevationleo_optional plateminelevationleo_;
     plateminelevationmeo_optional plateminelevationmeo_;
+    satminelevationleo_optional satminelevationleo_;
+    satmaxelevationleo_optional satmaxelevationleo_;
+    satminelevationmeo_optional satminelevationmeo_;
+    satmaxelevationmeo_optional satmaxelevationmeo_;
     ::xsd::cxx::tree::one< plateminseparationangle_type > plateminseparationangle_;
     ::xsd::cxx::tree::one< location_type > location_;
     ::xsd::cxx::tree::one< combiners_type > combiners_;

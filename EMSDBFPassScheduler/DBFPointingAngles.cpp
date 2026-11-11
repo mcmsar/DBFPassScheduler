@@ -1384,6 +1384,11 @@ CDBFPointingAngles::GetConstellation( ULONG ulSatID, double* dWaveLength, double
 	EMS_RESULT	hr = EMS_BAD_PARAM;
 	double dFrequency = 0.0;
 
+	// LEO (Cospas-Sarsat LEOSAR, IDs below 200 -- the same rule as CheckLEOMEO)
+	// downlinks at 1544.5 MHz. Without this branch LEO returned 0 Hz, so the
+	// reference-beacon FOA carried no downlink Doppler (up to +/-35 kHz on LEO)
+	// and the DBF phase calculation divided by a zero wavelength (NaN phases).
+	if (ulSatID > 0   && ulSatID < 200 ) dFrequency = 1544.50e6;
 	if (ulSatID > 400 && ulSatID < 500 ) dFrequency = 1544.10e6;
 	if (ulSatID > 500 && ulSatID < 600 ) dFrequency = 1544.90e6;
 	if (ulSatID > 600 && ulSatID < 700 ) dFrequency = 1544.21e6;

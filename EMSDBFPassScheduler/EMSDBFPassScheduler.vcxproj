@@ -14,6 +14,9 @@
     <ProjectGuid>{697B7D9A-3D00-4E70-A769-86AB0CE51977}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>EMSDBFPassScheduler</RootNamespace>
+    <!-- Always hand the build to MSBuild so the pre-build step can refresh the
+         git hash in BuildInfo.h, even when no source file changed. -->
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -64,6 +67,10 @@
       <AdditionalLibraryDirectories>..\..\3rdParty\apache\xerces\c\libx64\lib;..\..\Common\Library;..\..\3rdParty\Intel\IPP\2022.3\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>EMSConfigClientCPP x64.lib;xerces-c_3D.lib;ippi.lib;ipps.lib;ippcore.lib;ippvm.lib;ippcv.lib;Mpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)..\Write-BuildInfo.ps1" -OutFile "$(ProjectDir)BuildInfo.h" -Configuration $(Configuration)</Command>
+      <Message>Stamping git commit hash into BuildInfo.h</Message>
+    </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /Y /D "..\redist\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
@@ -86,6 +93,10 @@
       <AdditionalLibraryDirectories>..\..\3rdParty\apache\xerces\c\libx64\lib;..\..\Common\Library;..\..\3rdParty\Intel\IPP\2022.3\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>EMSConfigClientCPP x64.lib;xerces-c_3.lib;ippi.lib;ipps.lib;ippcore.lib;ippvm.lib;ippcv.lib;Netapi32.lib;Mpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)..\Write-BuildInfo.ps1" -OutFile "$(ProjectDir)BuildInfo.h" -Configuration $(Configuration)</Command>
+      <Message>Stamping git commit hash into BuildInfo.h</Message>
+    </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /Y /D "..\redist\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
@@ -96,6 +107,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DBFPSConfig.h" />
+    <ClInclude Include="Version.h" />
+    <ClInclude Include="BuildInfo.h" />
     <ClInclude Include="CSVReader.h" />
     <ClInclude Include="DBFOrbitCalc.h" />
     <ClInclude Include="OrbitCalc\SgpxStr.h" />

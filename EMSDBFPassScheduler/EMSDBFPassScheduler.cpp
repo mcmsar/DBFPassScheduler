@@ -32,6 +32,7 @@
 #include "aobjbase.h"
 
 #include "EMSDBFPassScheduler.h"
+#include "Version.h"
 #include "emsvectr.h"
 #include "DBFNullPointing.h"
 #include "logclient.h"
@@ -112,9 +113,13 @@ CEMSDBFSchedulerService::_DoIdle()
 		FILE *lpTraceFILE =  CDBFPSConfig::Instance().OpenTraceLog();
 		if (lpTraceFILE)
 		{
-			fprintf(lpTraceFILE,"Generating new pass schedule : %4d/%2d/%2d %2d:%2d:%2d\n",
+			// Build stamp on every schedule block as well as at startup: trace
+			// pruning can drop the startup line, but keeps whole blocks. It goes
+			// after the date, which is all _ParseTraceAnchorDate reads.
+			fprintf(lpTraceFILE,"Generating new pass schedule : %4d/%2d/%2d %2d:%2d:%2d  [%s %s]\n",
 				tmTimeFields.nYear, tmTimeFields.nMonth, tmTimeFields.nDay,
-				tmTimeFields.nHour, tmTimeFields.nMinute, tmTimeFields.nSecond );
+				tmTimeFields.nHour, tmTimeFields.nMinute, tmTimeFields.nSecond,
+				DBF_PASS_SCHEDULER_VERSION, BUILD_GIT_HASH );
 			fclose(lpTraceFILE);
 		}
 
@@ -189,31 +194,42 @@ CEMSDBFSchedulerService::_GetSatVectorForConstellation( const std::string& szCon
 // to be compile-time constants here; they now come from <satminelevation>,
 // <satmaxelevation>, <plateminelevationleo> and <plateminelevationmeo> on the plate
 // in DBFPassSchedule.xml, defaulted in CEMSDBFPassScheduleCfg to the values that
-// were hardcoded. This is the single implementation of the criteria, so the fallback
+// were hardcoded. The satellite elevation window can additionally be set per class
+// with <satmin/maxelevationleo> and <satmin/maxelevationmeo>. This is the single implementation of the criteria, so the fallback
 // decision in _HasSchedulableSatellite and the real bPassOK decision below cannot
 // drift apart.
 static bool _IsSchedulable( const EMSDBFAZEL& azel, const EMSDBFPLATECFG& plateCfg )
 {
-	// Satellite elevation above the local horizon. The upper bound is a site
-	// blockage limit, not a geometry one.
-	if ( ( azel.degSatElevation <= plateCfg.fSatMinElevation )
-		|| ( azel.degSatElevation >= plateCfg.fSatMaxElevation ) )
+	// Thresholds by constellation class. Ids between 200 and 400 match neither
+	// class and are never schedulable here.
+	float fSatMinElevation, fSatMaxElevation, fPlateMinElevation;
+	if ( azel.ulSatID < 200 )
+	{
+		fSatMinElevation   = plateCfg.fSatMinElevationLEO;
+		fSatMaxElevation   = plateCfg.fSatMaxElevationLEO;
+		fPlateMinElevation = plateCfg.fPlateMinElevationLEO;
+	}
+	else if ( azel.ulSatID > 400 )
+	{
+		fSatMinElevation   = plateCfg.fSatMinElevationMEO;
+		fSatMaxElevation   = plateCfg.fSatMaxElevationMEO;
+		fPlateMinElevation = plateCfg.fPlateMinElevationMEO;
+	}
+	else
 	{
 		return false;
 	}
 
-	// Floor on the angle off the plate boresight, by constellation class. Ids
-	// between 200 and 400 match neither class and are never schedulable here.
-	if ( azel.ulSatID < 200 )
+	// Satellite elevation above the local horizon. The upper bound is a site
+	// blockage limit, not a geometry one.
+	if ( ( azel.degSatElevation <= fSatMinElevation )
+		|| ( azel.degSatElevation >= fSatMaxElevation ) )
 	{
-		return azel.degPlateElevation > plateCfg.fPlateMinElevationLEO;
-	}
-	else if ( azel.ulSatID > 400 )
-	{
-		return azel.degPlateElevation > plateCfg.fPlateMinElevationMEO;
+		return false;
 	}
 
-	return false;
+	// Floor on the angle off the plate boresight.
+	return azel.degPlateElevation > fPlateMinElevation;
 }
 
 // True if at least one entry in aAzEls would actually clear the bPassOK criteria
@@ -238,10 +254,13 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 
 	EMS_RESULT hr = EMS_OK;
 
-	// The plate's acceptance window and its scheduling thresholds live in
-	// DBFPassSchedule.xml alongside the plate's location, not in the plate file that
-	// SetPlate() below comes from. m_ulPlates is this vector's own size, so the index
-	// is in range; the guard only covers a malformed config.
+	// Everything per plate - acceptance window, scheduling thresholds, location and
+	// combiners - lives in DBFPassSchedule.xml, not in the plate file that SetPlate()
+	// below comes from. All of it is taken from this plate's own entry: these used to
+	// be single members overwritten per plate in _Init, so every plate was written to
+	// the last plate's combiners and each plate truncated the previous one's files.
+	// m_ulPlates is this vector's own size, so the index is in range; the guard only
+	// covers a malformed config.
 	const std::vector<EMSDBFPLATECFG>& vectPlateCfg = m_oDBFPassSchedCfg.GetDbfPassScheduleCfg().vectDbfPlate;
 
 	for(ULONG nPlate = 0; nPlate < m_ulPlates; nPlate++)
@@ -252,7 +271,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 		// unreadable in both formats (ReadDBFPlateConfigFromXML logs which and why).
 		// SetPlate() below copies m_vectPlates[nPlate] wholesale, so indexing an
 		// empty vector here was an access violation in VCRUNTIME140 on every start.
-		if ( nPlate >= m_vectPlates.size() )
+		if ( nPlate >= m_vectPlates.size() || nPlate >= m_vectPlateLoaded.size() || !m_vectPlateLoaded[nPlate] )
 		{
 			FILE* lpTrace = CDBFPSConfig::Instance().OpenTraceLog();
 			if ( lpTrace )
@@ -267,8 +286,15 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 		}
 
 		const EMSDBFPLATECFG& plateCfg = vectPlateCfg[nPlate];
+		const std::vector<EMSDBFCOMBINERCFG>& vectCombiners = plateCfg.vectDbfCombiner;
+		const WORD wPlateId = plateCfg.wPlateId;
 
-		ULONG nCombBoardCount  = m_vectDbfCombiner.size();
+		EMSDBFPASITELOCATIONCFG siteLocation;
+		memset( &siteLocation, 0, sizeof(EMSDBFPASITELOCATIONCFG) );
+		siteLocation.ulLutId = m_ulLutId;
+		memcpy( &siteLocation.locnAntenna, &plateCfg.plateLocation, sizeof(EMSLOCATION) );
+
+		ULONG nCombBoardCount  = vectCombiners.size();
 
 		for(ULONG nCombBoard = 0; nCombBoard < nCombBoardCount; nCombBoard++)
 		{
@@ -302,13 +328,13 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 			
 			std::vector<EMSDBFPASATCFG> ulVectAllSats;
 			std::vector<EMSDBFPASATCFG> ulVectAllSatsSecondary;
-			std::string szCombinerIP = m_vectDbfCombiner[nCombBoard].szIpAddress;
+			std::string szCombinerIP = vectCombiners[nCombBoard].szIpAddress;
 
 			// The <constellation> value may name a single constellation ("BEIDOU") or a
 			// primary and fallback pair ("BEIDOU,GLONASS"). When no primary satellite is
 			// in view at a given time step, the fallback constellation is tried instead.
 			std::string szPrimaryConstellation, szSecondaryConstellation;
-			_SplitConstellationNames( m_vectDbfCombiner[nCombBoard].szConstellation, szPrimaryConstellation, szSecondaryConstellation );
+			_SplitConstellationNames( vectCombiners[nCombBoard].szConstellation, szPrimaryConstellation, szSecondaryConstellation );
 
 			ulVectAllSats = _GetSatVectorForConstellation( szPrimaryConstellation );
 
@@ -318,14 +344,14 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 				ulVectAllSatsSecondary = _GetSatVectorForConstellation( szSecondaryConstellation );
 			}
 
-			hr = oPA.Initialize(ulVectAllSats, m_siteLocation);
+			hr = oPA.Initialize(ulVectAllSats, siteLocation);
 			hr = oNP.Initialize();
 
 			oPA.SetPlate(&m_vectPlates[nPlate]);
 
 			if ( bHasSecondaryConstellation )
 			{
-				hr = oPASecondary.Initialize(ulVectAllSatsSecondary, m_siteLocation);
+				hr = oPASecondary.Initialize(ulVectAllSatsSecondary, siteLocation);
 				oPASecondary.SetPlate(&m_vectPlates[nPlate]);
 			}
 
@@ -339,8 +365,6 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 											 plateCfg.fPlateMinAzimuth,
 											 plateCfg.fPlateMaxAzimuth );
 			}
-
-			m_wPlateId = nPlate + 1;
 
 			ULONG irec = 0;
 
@@ -384,7 +408,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 						// Primary constellation has nothing that will actually clear the
 						// scheduling threshold at this time step (it may still have shown
 						// up in aAzEls/ulActual above -- that only reflects the much looser
-						// 5-degree pipeline cutoff). Try the secondary constellation instead.
+						// horizon pipeline cutoff). Try the secondary constellation instead.
 						ULONG ulActualSecondary = 0;
 						memset( aAzElsSecondary, 0, sizeof(EMSDBFAZEL) * culMaxSats);
 
@@ -414,7 +438,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 
 				PassRecord.wProcessID = 0; // do nothing
 				PassRecord.ulLutID	  = m_ulLutId;
-				PassRecord.wPlateID	  = m_wPlateId;
+				PassRecord.wPlateID	  = wPlateId;
 				PassRecord.ulPassID	  = m_ulPassId;
 			
 				bool bTestSun = true;
@@ -423,7 +447,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 					// Write Pass Records
 					PassRecord.timestamp  = timeNow;
 					//PassRecord.wAntennaID = m_vectPlates[nPlate].wPlateID;
-					PassRecord.wAntennaID = m_vectDbfCombiner[nCombBoard].wCombinerId;
+					PassRecord.wAntennaID = vectCombiners[nCombBoard].wCombinerId;
 					hr = m_oDMgr.WritePassSchedule( PassRecord, szCombinerIP, bTestSun, szActiveConstellation );
 				}
 				else if ( ulActual > 0 )
@@ -487,7 +511,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 						{
 							PassRecord.timestamp  = timeNow;
 							//PassRecord.wAntennaID      = m_vectPlates[nPlate].wPlateID;
-							PassRecord.wAntennaID	   = m_vectDbfCombiner[nCombBoard].wCombinerId;
+							PassRecord.wAntennaID	   = vectCombiners[nCombBoard].wCombinerId;
 							PassRecord.ulSatID         = aAzEls[j].ulSatID;
 							PassRecord.ulPassID        = aAzEls[j].ulPassID;
 
@@ -506,7 +530,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 							PassRecord.fElevation      = (float) aAzEls[j].degSatElevation;
 							PassRecord.fPlateAzimuth   = (float) aAzEls[j].degPlateAzimuth;
 							PassRecord.fPlateElevation = (float) aAzEls[j].degPlateElevation;
-							PassRecord.wPlateID		   = m_wPlateId;
+							PassRecord.wPlateID		   = wPlateId;
 							memcpy( &PassRecord.timeCoord, &aAzEls[j].timeCoord, sizeof(EMSTIMECOORD) );
 
 							// RR the number of channels is one more than the number of cells
@@ -523,7 +547,7 @@ CEMSDBFSchedulerService::_GenerateNewPassSched( EMSTIME startTime, EMSTIME endTi
 							{
 
 								refPosition  = oCoord.ToEarthFixed( PassRecord.RefLocation );
-								sitePosition = oCoord.ToEarthFixed( m_siteLocation.locnAntenna );
+								sitePosition = oCoord.ToEarthFixed( siteLocation.locnAntenna );
 							    
 								bool bEarthFixed = true;
 								hr = pActivePA->GetSatelliteVectorEF( timeNow,  PassRecord.ulSatID, &timeCoord );
@@ -734,6 +758,7 @@ CEMSDBFSchedulerService::_Init()
 			FILE* lpT = CDBFPSConfig::Instance().OpenTraceLog();
 			if ( lpT )
 			{
+				fprintf( lpT, "=== %s starting ===\n", DBF_PASS_SCHEDULER_BUILD_STRING );
 				fprintf( lpT, "_Init: PassScheduleFile=%s  ReadDBFConfigFromXML hr=0x%08X\n",
 					szConfigFile.c_str(), hr );
 				fclose( lpT );
@@ -750,22 +775,30 @@ CEMSDBFSchedulerService::_Init()
 			m_ulPlates = oPassCfg.vectDbfPlate.size();
 
 
-			for(ULONG i = 0; i < m_ulPlates; i++)  //Now consider one plate only
+			m_vectPlates.clear();
+			m_vectPlateLoaded.clear();
+
+			for(ULONG i = 0; i < m_ulPlates; i++)
 			{
-				memset(	&m_siteLocation, 0, sizeof(EMSDBFPASITELOCATIONCFG));
-				m_siteLocation.ulLutId = m_ulLutId;
-				memcpy(&m_siteLocation.locnAntenna, &oPassCfg.vectDbfPlate[i].plateLocation, sizeof(EMSLOCATION));
-
-
+				// ReadDBFPlateConfigFromXML appends to GetDBFPlatesCfg() only when the
+				// file loads, so its index does not follow the config's. Keep
+				// m_vectPlates aligned with vectDbfPlate by taking whatever it appended,
+				// or a zeroed placeholder flagged as not loaded.
+				const size_t nBefore = m_oDBFPassSchedCfg.GetDBFPlatesCfg().size();
 				m_oDBFPassSchedCfg.ReadDBFPlateConfigFromXML(oPassCfg.vectDbfPlate[i].szPlateCfgFile);
 
-				m_vectDbfCombiner = oPassCfg.vectDbfPlate[i].vectDbfCombiner;
+				EMSDBFARRAY plate;
+				memset( &plate, 0, sizeof(EMSDBFARRAY) );
+				const bool bLoaded = m_oDBFPassSchedCfg.GetDBFPlatesCfg().size() > nBefore;
+				if ( bLoaded )
+					plate = m_oDBFPassSchedCfg.GetDBFPlatesCfg().back();
 
-				m_vectPlates = m_oDBFPassSchedCfg.GetDBFPlatesCfg();
-				if ( i >= m_vectPlates.size() ) continue;
-				WORD wCellNumber = m_vectPlates[i].wCellNumber;
+				m_vectPlates.push_back( plate );
+				m_vectPlateLoaded.push_back( bLoaded );
 
-				m_oDMgr.Initialize( m_vectDbfCombiner ,  wCellNumber);
+				if ( !bLoaded ) continue;
+
+				m_oDMgr.Initialize( oPassCfg.vectDbfPlate[i].vectDbfCombiner, plate.wCellNumber );
 			}
 
 			m_vectLeoSats.clear();
@@ -844,6 +877,10 @@ CEMSDBFSchedulerService::_Init()
 
 int main(int argc, char* argv[])
 {
+	printf( "%s\n", DBF_PASS_SCHEDULER_BUILD_STRING );
+	if( argc > 1 && ( 0 == _stricmp( argv[1], "-version" ) || 0 == _stricmp( argv[1], "--version" ) ) )
+		return 0;
+
 	try
 	{
 		CEMSDBFSchedulerService oDBFPassSchedService;

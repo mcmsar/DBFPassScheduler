@@ -19,3 +19,6 @@ Build/
 *.lastbuildstate
 *.write.1.tlog
 ipch/
+
+# Generated at build time by Write-BuildInfo.ps1
+EMSDBFPassScheduler/BuildInfo.h

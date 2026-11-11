@@ -80,7 +80,7 @@ interface IEMSSatelliteInfo12;
 
 const ULONG culMaxSats = 128;
 const ULONG culMaxChannels = 63;
-const double cdSiteMinElevation  = 5.0;  // minimum elevation angle at site
+const double cdSiteMinElevation  = 0.0;  // minimum elevation angle at site
 
 // Fallbacks for the plate acceptance window, used only until SetPlateLimits() is
 // called with the values from <dbfplate> in DBFPassSchedule.xml. There used to be

@@ -46,8 +46,14 @@ typedef struct _tagEMSDBFPLATECFG
 	// satellite elevation pair bounds the angle above the local horizon; the plate
 	// pair are floors on the angle off the plate boresight, picked per constellation
 	// class. Defaults match the values these used to have as compile-time constants.
+	// The satellite elevation pair is also split per constellation class; each of
+	// those falls back to the shared fSatMin/MaxElevation when not configured.
 	float fSatMinElevation;
 	float fSatMaxElevation;
+	float fSatMinElevationLEO;
+	float fSatMaxElevationLEO;
+	float fSatMinElevationMEO;
+	float fSatMaxElevationMEO;
 	float fPlateMinElevationLEO;
 	float fPlateMinElevationMEO;
 	float fPlateMinSeparationAngle;

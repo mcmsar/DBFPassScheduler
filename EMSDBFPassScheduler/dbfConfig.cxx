@@ -507,6 +507,102 @@ namespace dbfconfig
     this->plateminelevationmeo_ = x;
   }
 
+  const dbfplate::satminelevationleo_optional& dbfplate::
+  satminelevationleo () const
+  {
+    return this->satminelevationleo_;
+  }
+
+  dbfplate::satminelevationleo_optional& dbfplate::
+  satminelevationleo ()
+  {
+    return this->satminelevationleo_;
+  }
+
+  void dbfplate::
+  satminelevationleo (const satminelevationleo_type& x)
+  {
+    this->satminelevationleo_.set (x);
+  }
+
+  void dbfplate::
+  satminelevationleo (const satminelevationleo_optional& x)
+  {
+    this->satminelevationleo_ = x;
+  }
+
+  const dbfplate::satmaxelevationleo_optional& dbfplate::
+  satmaxelevationleo () const
+  {
+    return this->satmaxelevationleo_;
+  }
+
+  dbfplate::satmaxelevationleo_optional& dbfplate::
+  satmaxelevationleo ()
+  {
+    return this->satmaxelevationleo_;
+  }
+
+  void dbfplate::
+  satmaxelevationleo (const satmaxelevationleo_type& x)
+  {
+    this->satmaxelevationleo_.set (x);
+  }
+
+  void dbfplate::
+  satmaxelevationleo (const satmaxelevationleo_optional& x)
+  {
+    this->satmaxelevationleo_ = x;
+  }
+
+  const dbfplate::satminelevationmeo_optional& dbfplate::
+  satminelevationmeo () const
+  {
+    return this->satminelevationmeo_;
+  }
+
+  dbfplate::satminelevationmeo_optional& dbfplate::
+  satminelevationmeo ()
+  {
+    return this->satminelevationmeo_;
+  }
+
+  void dbfplate::
+  satminelevationmeo (const satminelevationmeo_type& x)
+  {
+    this->satminelevationmeo_.set (x);
+  }
+
+  void dbfplate::
+  satminelevationmeo (const satminelevationmeo_optional& x)
+  {
+    this->satminelevationmeo_ = x;
+  }
+
+  const dbfplate::satmaxelevationmeo_optional& dbfplate::
+  satmaxelevationmeo () const
+  {
+    return this->satmaxelevationmeo_;
+  }
+
+  dbfplate::satmaxelevationmeo_optional& dbfplate::
+  satmaxelevationmeo ()
+  {
+    return this->satmaxelevationmeo_;
+  }
+
+  void dbfplate::
+  satmaxelevationmeo (const satmaxelevationmeo_type& x)
+  {
+    this->satmaxelevationmeo_.set (x);
+  }
+
+  void dbfplate::
+  satmaxelevationmeo (const satmaxelevationmeo_optional& x)
+  {
+    this->satmaxelevationmeo_ = x;
+  }
+
   const dbfplate::plateminseparationangle_type& dbfplate::
   plateminseparationangle () const
   {
@@ -1417,6 +1513,10 @@ namespace dbfconfig
     satmaxelevation_ (::xml_schema::flags (), this),
     plateminelevationleo_ (::xml_schema::flags (), this),
     plateminelevationmeo_ (::xml_schema::flags (), this),
+    satminelevationleo_ (::xml_schema::flags (), this),
+    satmaxelevationleo_ (::xml_schema::flags (), this),
+    satminelevationmeo_ (::xml_schema::flags (), this),
+    satmaxelevationmeo_ (::xml_schema::flags (), this),
     plateminseparationangle_ (plateminseparationangle, ::xml_schema::flags (), this),
     location_ (location, ::xml_schema::flags (), this),
     combiners_ (combiners, ::xml_schema::flags (), this),
@@ -1440,6 +1540,10 @@ namespace dbfconfig
     satmaxelevation_ (::xml_schema::flags (), this),
     plateminelevationleo_ (::xml_schema::flags (), this),
     plateminelevationmeo_ (::xml_schema::flags (), this),
+    satminelevationleo_ (::xml_schema::flags (), this),
+    satmaxelevationleo_ (::xml_schema::flags (), this),
+    satminelevationmeo_ (::xml_schema::flags (), this),
+    satmaxelevationmeo_ (::xml_schema::flags (), this),
     plateminseparationangle_ (plateminseparationangle, ::xml_schema::flags (), this),
     location_ (location, ::xml_schema::flags (), this),
     combiners_ (combiners, ::xml_schema::flags (), this),
@@ -1460,6 +1564,10 @@ namespace dbfconfig
     satmaxelevation_ (x.satmaxelevation_, f, this),
     plateminelevationleo_ (x.plateminelevationleo_, f, this),
     plateminelevationmeo_ (x.plateminelevationmeo_, f, this),
+    satminelevationleo_ (x.satminelevationleo_, f, this),
+    satmaxelevationleo_ (x.satmaxelevationleo_, f, this),
+    satminelevationmeo_ (x.satminelevationmeo_, f, this),
+    satmaxelevationmeo_ (x.satmaxelevationmeo_, f, this),
     plateminseparationangle_ (x.plateminseparationangle_, f, this),
     location_ (x.location_, f, this),
     combiners_ (x.combiners_, f, this),
@@ -1480,6 +1588,10 @@ namespace dbfconfig
     satmaxelevation_ (f, this),
     plateminelevationleo_ (f, this),
     plateminelevationmeo_ (f, this),
+    satminelevationleo_ (f, this),
+    satmaxelevationleo_ (f, this),
+    satminelevationmeo_ (f, this),
+    satmaxelevationmeo_ (f, this),
     plateminseparationangle_ (f, this),
     location_ (f, this),
     combiners_ (f, this),
@@ -1531,7 +1643,7 @@ namespace dbfconfig
       //
       if (n.name () == "plateminazimuth" && n.namespace_ ().empty ())
       {
-        if (!this->plateminazimuth_.present ())
+        if (!this->plateminazimuth_)
         {
           this->plateminazimuth_.set (plateminazimuth_traits::create (i, f, this));
           continue;
@@ -1542,7 +1654,7 @@ namespace dbfconfig
       //
       if (n.name () == "platemaxazimuth" && n.namespace_ ().empty ())
       {
-        if (!this->platemaxazimuth_.present ())
+        if (!this->platemaxazimuth_)
         {
           this->platemaxazimuth_.set (platemaxazimuth_traits::create (i, f, this));
           continue;
@@ -1553,7 +1665,7 @@ namespace dbfconfig
       //
       if (n.name () == "satminelevation" && n.namespace_ ().empty ())
       {
-        if (!this->satminelevation_.present ())
+        if (!this->satminelevation_)
         {
           this->satminelevation_.set (satminelevation_traits::create (i, f, this));
           continue;
@@ -1564,7 +1676,7 @@ namespace dbfconfig
       //
       if (n.name () == "satmaxelevation" && n.namespace_ ().empty ())
       {
-        if (!this->satmaxelevation_.present ())
+        if (!this->satmaxelevation_)
         {
           this->satmaxelevation_.set (satmaxelevation_traits::create (i, f, this));
           continue;
@@ -1575,7 +1687,7 @@ namespace dbfconfig
       //
       if (n.name () == "plateminelevationleo" && n.namespace_ ().empty ())
       {
-        if (!this->plateminelevationleo_.present ())
+        if (!this->plateminelevationleo_)
         {
           this->plateminelevationleo_.set (plateminelevationleo_traits::create (i, f, this));
           continue;
@@ -1586,9 +1698,53 @@ namespace dbfconfig
       //
       if (n.name () == "plateminelevationmeo" && n.namespace_ ().empty ())
       {
-        if (!this->plateminelevationmeo_.present ())
+        if (!this->plateminelevationmeo_)
         {
           this->plateminelevationmeo_.set (plateminelevationmeo_traits::create (i, f, this));
+          continue;
+        }
+      }
+
+      // satminelevationleo
+      //
+      if (n.name () == "satminelevationleo" && n.namespace_ ().empty ())
+      {
+        if (!this->satminelevationleo_)
+        {
+          this->satminelevationleo_.set (satminelevationleo_traits::create (i, f, this));
+          continue;
+        }
+      }
+
+      // satmaxelevationleo
+      //
+      if (n.name () == "satmaxelevationleo" && n.namespace_ ().empty ())
+      {
+        if (!this->satmaxelevationleo_)
+        {
+          this->satmaxelevationleo_.set (satmaxelevationleo_traits::create (i, f, this));
+          continue;
+        }
+      }
+
+      // satminelevationmeo
+      //
+      if (n.name () == "satminelevationmeo" && n.namespace_ ().empty ())
+      {
+        if (!this->satminelevationmeo_)
+        {
+          this->satminelevationmeo_.set (satminelevationmeo_traits::create (i, f, this));
+          continue;
+        }
+      }
+
+      // satmaxelevationmeo
+      //
+      if (n.name () == "satmaxelevationmeo" && n.namespace_ ().empty ())
+      {
+        if (!this->satmaxelevationmeo_)
+        {
+          this->satmaxelevationmeo_.set (satmaxelevationmeo_traits::create (i, f, this));
           continue;
         }
       }

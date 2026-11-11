@@ -70,11 +70,18 @@
 		     local horizon (the upper bound is a site blockage limit). The two
 		     plateminelevation* values are floors on the angle off the plate boresight,
 		     applied per constellation class: LEO for satellite ids below 200, MEO for
-		     ids above 400. -->
+		     ids above 400.
+		     satminelevationleo/satmaxelevationleo and satminelevationmeo/
+		     satmaxelevationmeo override satminelevation/satmaxelevation for that
+		     constellation class; any one omitted falls back to the shared value. -->
 		<xs:element name="satminelevation" type="xs:decimal" minOccurs="0"/>
 		<xs:element name="satmaxelevation" type="xs:decimal" minOccurs="0"/>
 		<xs:element name="plateminelevationleo" type="xs:decimal" minOccurs="0"/>
 		<xs:element name="plateminelevationmeo" type="xs:decimal" minOccurs="0"/>
+		<xs:element name="satminelevationleo" type="xs:decimal" minOccurs="0"/>
+		<xs:element name="satmaxelevationleo" type="xs:decimal" minOccurs="0"/>
+		<xs:element name="satminelevationmeo" type="xs:decimal" minOccurs="0"/>
+		<xs:element name="satmaxelevationmeo" type="xs:decimal" minOccurs="0"/>
 		<xs:element name="plateminseparationangle" type="xs:decimal"/>
 		<xs:element  name="location" type="dbfconfig:location"/>
 		<xs:element  name="combiners" type="dbfconfig:combiners"/>

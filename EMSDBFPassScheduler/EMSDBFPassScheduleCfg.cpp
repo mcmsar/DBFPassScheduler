@@ -523,7 +523,8 @@ CEMSDBFPassScheduleCfg::ReadDBFConfigFromXML(const std::string szInFile)
 			std::string szPlateId = iter->id();
 			odbfPlateCfg.wPlateId = (WORD)(std::stoul (szPlateId,nullptr,0));
 
-			odbfPlateCfg.szPlateCfgFile = iter->plateconfigfile();
+			// Trimmed: configs pad values ("DBFplate_01.xml </plateconfigfile>").
+			odbfPlateCfg.szPlateCfgFile = _Trim( iter->plateconfigfile() );
 
 			odbfPlateCfg.fPlateMinElevation = (float)iter->plateminelevation(); 
 
@@ -545,6 +546,21 @@ CEMSDBFPassScheduleCfg::ReadDBFConfigFromXML(const std::string szInFile)
 
 			odbfPlateCfg.fSatMaxElevation = iter->satmaxelevation().present()
 											? (float)iter->satmaxelevation().get() : 85.0f;
+
+			// Per-class overrides of the pair above. Each one omitted inherits the
+			// shared <satminelevation>/<satmaxelevation>, so existing configs are
+			// unaffected and a config can override just one class or one edge.
+			odbfPlateCfg.fSatMinElevationLEO = iter->satminelevationleo().present()
+											? (float)iter->satminelevationleo().get() : odbfPlateCfg.fSatMinElevation;
+
+			odbfPlateCfg.fSatMaxElevationLEO = iter->satmaxelevationleo().present()
+											? (float)iter->satmaxelevationleo().get() : odbfPlateCfg.fSatMaxElevation;
+
+			odbfPlateCfg.fSatMinElevationMEO = iter->satminelevationmeo().present()
+											? (float)iter->satminelevationmeo().get() : odbfPlateCfg.fSatMinElevation;
+
+			odbfPlateCfg.fSatMaxElevationMEO = iter->satmaxelevationmeo().present()
+											? (float)iter->satmaxelevationmeo().get() : odbfPlateCfg.fSatMaxElevation;
 
 			odbfPlateCfg.fPlateMinElevationLEO = iter->plateminelevationleo().present()
 											? (float)iter->plateminelevationleo().get() : 12.0f;
